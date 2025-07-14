@@ -1,0 +1,33 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*  # in case you use .env.production or similar
+
+# Firebase Credentials
+serviceAccountKey.js
+
+# Logs
+logs/
+*.log
+logfile.*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDE-specific
+.vscode/
+.idea/
+
+# Optional: Ignore build or dist folders if created during deployment
+dist/
+build/
+
+# Optional: Ignore uploads or temp data
+# uploads/
+# tmp/
