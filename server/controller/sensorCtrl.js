@@ -1,5 +1,9 @@
 const { db } = require('../config/firebase');
 const admin = require('firebase-admin');
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
+const { spawn } = require('child_process');
 
 // Handle receiving new sensor data
 const receiveData = async (req, res) => {
@@ -103,9 +107,95 @@ const getStatus = async (req, res) => {
   }
 };
 
+// Setup for multer to store uploaded image
+const uploadDir = path.join(__dirname, '..', 'uploadIMG');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir); // Create the folder if it doesn't exist
+}
+
+//Set up Multer to store uploaded images
+const storage = multer.diskStorage({
+  destination: uploadDir, // Save images to 'uploadIMG' folder
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + path.extname(file.originalname); 
+    cb(null, uniqueName); 
+  }
+});
+const upload = multer({ storage });
+
+// Controller function to handle prediction
+const predictImage = (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image uploaded' });
+  }
+
+  const imagePath = path.resolve(req.file.path); // Get full path to image
+  console.log("Uploaded image path:", req.file.path);
+  console.log("image path sent to Python:", imagePath);
+
+  // Run the Python script with image path as argument
+  const pythonProcess = spawn('python', [
+    'D:\\fireDetectionBackend\\server\\model\\predict.py',
+    imagePath
+  ]);
+
+  let responseSent = false;
+
+  // When Python sends output (like "fire" or "nofire")
+  pythonProcess.stdout.on('data', (data) => {
+    const result = data.toString().trim(); // Convert Buffer to string
+    console.log("Python response:", result);
+
+    if (!responseSent) {
+      if (result === 'fire') {
+        res.json({ fire: true });
+        responseSent = true;
+      } else if (result === 'nofire') {
+        res.json({ fire: false });
+        responseSent = true;
+      }
+    }
+  });
+
+  // If Python sends error output
+  pythonProcess.stderr.on('data', (error) => {
+    const errMessage = error.toString();
+    console.error('PYTHON STDERR:', errMessage);
+
+    // Ignore harmless TensorFlow warnings
+    const isRealError =
+      errMessage.toLowerCase().includes('traceback') ||
+      (errMessage.toLowerCase().includes('error') &&
+        !errMessage.includes('onednn') &&
+        !errMessage.includes('cpu_feature_guard') &&
+        !errMessage.includes('tensorflow'));
+
+    if (isRealError && !responseSent) {
+      res.status(500).json({ error: 'Prediction failed' });
+      responseSent = true;
+    }
+  });
+
+  // When Python process ends
+  pythonProcess.on('close', (code) => {
+    console.log("Python exited with code:", code);
+
+    if (!responseSent) {
+      if (code !== 0) {
+        res.status(500).json({ error: 'Prediction process exited with error' });
+      } else {
+        res.status(500).json({ error: 'Unexpected prediction result' });
+      }
+    }
+  });
+};
+
+//export all functions
 module.exports = {
   receiveData,
   getData,
   getLatestSensorData,
   getStatus,
+  upload,
+  predictImage
 };
