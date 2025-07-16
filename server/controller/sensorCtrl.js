@@ -4,6 +4,7 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const sendEmail = require('../services/mailer');
 
 // Handle receiving new sensor data
 const receiveData = async (req, res) => {
@@ -39,6 +40,35 @@ const receiveData = async (req, res) => {
 
   res.json({ success: true, message: 'Data received' });
 };
+
+// This function will handle WebSocket data reception and broadcasting
+const webSocketFeed = async (req, res, broadcast) => {
+  const data = {
+    temperature: req.body.temperature,
+    humidity: req.body.humidity,
+    smoke: req.body.smoke,
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    // Optional: store in database (e.g., Firebase, Firestore)
+
+    console.log('Sensor Data:', data);
+
+    //Send to WebSocket clients
+    broadcast({
+      type: 'sensor_update',
+      data: data,
+    });
+
+    res.status(200).json({ success: true, message: 'Sensor data received' });
+  } catch (err) {
+    console.error('Error processing sensor data', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
 
 // Return last 100 entries
 const getData = async (req, res) => {
@@ -117,8 +147,8 @@ if (!fs.existsSync(uploadDir)) {
 const storage = multer.diskStorage({
   destination: uploadDir, // Save images to 'uploadIMG' folder
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + path.extname(file.originalname); 
-    cb(null, uniqueName); 
+    const uniqueName = Date.now() + path.extname(file.originalname);
+    cb(null, uniqueName);
   }
 });
 const upload = multer({ storage });
@@ -133,62 +163,96 @@ const predictImage = (req, res) => {
   console.log("Uploaded image path:", req.file.path);
   console.log("image path sent to Python:", imagePath);
 
+  const fileName = path.basename(imagePath);
+  const imageUrl = ` https://a36bdfcc8298.ngrok-free.app/images/${fileName}`; // Construct URL for the image
+  console.log("uploaded image URL:", fileName);
+
+
   // Run the Python script with image path as argument
   const pythonProcess = spawn('python', [
     'D:\\fireDetectionBackend\\server\\model\\predict.py',
     imagePath
   ]);
 
-  let responseSent = false;
+  let responseSent = false;   // Make sure we only send response once
+  let result = null;          // Store Python result like "fire" or "nofire"
+  let errorMessage = null;    // Store any error messages from Python
 
-  // When Python sends output (like "fire" or "nofire")
-  pythonProcess.stdout.on('data', (data) => {
-    const result = data.toString().trim(); // Convert Buffer to string
-    console.log("Python response:", result);
-
+  // Helper to send a response only once
+  function sendOnce(callback) {
     if (!responseSent) {
-      if (result === 'fire') {
-        res.json({ fire: true });
-        responseSent = true;
-      } else if (result === 'nofire') {
-        res.json({ fire: false });
-        responseSent = true;
-      }
-    }
-  });
-
-  // If Python sends error output
-  pythonProcess.stderr.on('data', (error) => {
-    const errMessage = error.toString();
-    console.error('PYTHON STDERR:', errMessage);
-
-    // Ignore harmless TensorFlow warnings
-    const isRealError =
-      errMessage.toLowerCase().includes('traceback') ||
-      (errMessage.toLowerCase().includes('error') &&
-        !errMessage.includes('onednn') &&
-        !errMessage.includes('cpu_feature_guard') &&
-        !errMessage.includes('tensorflow'));
-
-    if (isRealError && !responseSent) {
-      res.status(500).json({ error: 'Prediction failed' });
       responseSent = true;
+      callback();
     }
+  }
+
+  //Get output from Python (standard output)
+  pythonProcess.stdout.on('data', (data) => {
+    result = data.toString().trim();  // Save prediction result
   });
 
-  // When Python process ends
-  pythonProcess.on('close', (code) => {
-    console.log("Python exited with code:", code);
+  // Get errors from Python (standard error)
+  pythonProcess.stderr.on('data', (err) => {
+    errorMessage = err.toString();
+    console.error('Python Error:', errorMessage);
+  });
 
-    if (!responseSent) {
-      if (code !== 0) {
-        res.status(500).json({ error: 'Prediction process exited with error' });
-      } else {
-        res.status(500).json({ error: 'Unexpected prediction result' });
+  // When Python script finishes
+  pythonProcess.on('close', async (code) => {
+
+    // Check if error message is serious
+    if (errorMessage) {
+      const seriousError = errorMessage.toLowerCase().includes('traceback') ||
+        (errorMessage.toLowerCase().includes('error') &&
+          !errorMessage.includes('onednn') &&
+          !errorMessage.includes('cpu_feature_guard') &&
+          !errorMessage.includes('tensorflow'));
+
+      if (seriousError) {
+        return sendOnce(() => res.status(500).json({ error: 'Prediction failed from Python script' }));
       }
     }
+
+    // If result is "fire"
+    if (result === 'fire') {
+      try {
+        await sendEmail(imageUrl);  // Send alert email
+        console.log('Email sent successfully');
+
+        return sendOnce(() => res.status(200).json({
+          fire: true,
+          imageUrl,
+          message: '🔥 Fire detected! Email alert sent.'
+        }));
+      } catch (err) {
+        console.error('Email sending failed:', err.message);
+
+        return sendOnce(() => res.status(500).json({
+          fire: true,
+          imageUrl,
+          message: 'Fire detected, but failed to send email.'
+        }));
+      }
+    }
+
+    // If result is "nofire"
+    if (result === 'nofire') {
+      return sendOnce(() => res.status(200).json({
+        fire: false,
+        message: 'No fire detected.'
+      }));
+    }
+
+    // If something went wrong and no result was received
+    if (code !== 0) {
+      return sendOnce(() => res.status(500).json({ error: 'Python process ended with an error.' }));
+    }
+
+    // If no result and no error — fallback case
+    return sendOnce(() => res.status(500).json({ error: 'Unexpected result from prediction script.' }));
   });
-};
+}
+
 
 //export all functions
 module.exports = {
@@ -197,5 +261,6 @@ module.exports = {
   getLatestSensorData,
   getStatus,
   upload,
-  predictImage
-};
+  predictImage,
+  webSocketFeed
+}
