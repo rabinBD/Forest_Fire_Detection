@@ -3,13 +3,14 @@ const morgan = require('morgan');
 require('dotenv').config();
 const cors = require('cors');
 const http = require('http'); //to bind WebSocket to the HTTP server
+const path = require('path');
 
 const admin = require('./routes/authRoute');
 const dashboard = require('./routes/dashboardRoute');
 const sensorRoute = require('./routes/sensorRoute'); //Will inject broadcast
 const notify = require('./routes/notifyRoute');
 
-// App & HTTP Server
+
 const app = express();
 const server = http.createServer(app); //Needed for WebSocket
 
@@ -21,6 +22,8 @@ app.use(cors({
     origin: 'http://localhost:5173', // Frontend URL
     credentials: true
 }));
+app.use('/images', express.static(path.join(__dirname, 'uploadIMG')));
+
 
 //Init WebSocket & inject broadcast function
 const {initWebSocket} = require('./services/websocket');
