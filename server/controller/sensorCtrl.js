@@ -68,8 +68,6 @@ const webSocketFeed = async (req, res, broadcast) => {
   }
 };
 
-
-
 // Return last 100 entries
 const getData = async (req, res) => {
   try {
@@ -254,6 +252,150 @@ const predictImage = (req, res) => {
 }
 
 
+// Unified function to handle sensor data and optional image prediction
+const handleSensorDataAndImage = async (req, res, broadcast) => {
+  try {
+    // Initialize sensor data object (excluding fireDetected)
+    const sensorData = {
+      temperature: req.body.temperature ? parseFloat(req.body.temperature) : null,
+      humidity: req.body.humidity ? parseFloat(req.body.humidity) : null,
+      smoke: req.body.smoke ? parseFloat(req.body.smoke) : null,
+      timestamp: new Date().toISOString(),
+    };
+
+    let responseData = { success: true, message: 'Data processed' };
+
+    // Handle sensor data if provided
+    if (sensorData.temperature || sensorData.humidity || sensorData.smoke) {
+      // Store sensor data in Firestore
+      await db.collection('fire_readings').add(sensorData);
+
+      // Broadcast sensor data to WebSocket clients
+      broadcast({
+        type: 'sensor_update',
+        data: sensorData,
+      });
+
+      console.log('Sensor Data:', sensorData);
+      responseData.message = 'Sensor data received';
+    }
+
+    // Handle image prediction if an image is uploaded
+    if (req.file) {
+      const imagePath = path.resolve(req.file.path);
+      const fileName = path.basename(imagePath);
+      const imageUrl = `https://8ae2ab392250.ngrok-free.app/images/${fileName}`; // Update with your ngrok URL
+
+      // Run the Python script for image prediction
+      const pythonProcess = spawn('python', [
+        'D:\\fireDetectionBackend\\server\\model\\predict.py',
+        imagePath,
+      ]);
+
+      let responseSent = false;
+      let result = null;
+      let errorMessage = null;
+
+      // Helper to send a response only once
+      const sendOnce = (callback) => {
+        if (!responseSent) {
+          responseSent = true;
+          callback();
+        }
+      };
+
+      // Capture Python script output
+      pythonProcess.stdout.on('data', (data) => {
+        result = data.toString().trim();
+      });
+
+      // Capture Python script errors
+      pythonProcess.stderr.on('data', (err) => {
+        errorMessage = err.toString();
+        console.error('Python Error:', errorMessage);
+      });
+
+      // Handle Python script completion
+      pythonProcess.on('close', async (code) => {
+        // Check for serious errors
+        if (errorMessage) {
+          const seriousError =
+            errorMessage.toLowerCase().includes('traceback') ||
+            (errorMessage.toLowerCase().includes('error') &&
+              !errorMessage.includes('onednn') &&
+              !errorMessage.includes('cpu_feature_guard') &&
+              !errorMessage.includes('tensorflow'));
+
+          if (seriousError) {
+            return sendOnce(() =>
+              res.status(500).json({ error: 'Prediction failed from Python script' })
+            );
+          }
+        }
+
+        // Process prediction result
+        if (result === 'fire') {
+          try {
+            // Store fire detection result in Firestore
+            await db.collection('fire_readings').add({
+              ...sensorData,
+              fireDetected: true,
+              imageUrl,
+              timestamp: new Date().toISOString(),
+            });
+
+            // Send notifications to admins
+            // const tokensSnapshot = await db.collection('admin_tokens').get();
+            // for (const doc of tokensSnapshot.docs) {
+            //   const token = doc.data().token;
+            //   try {
+            //     await admin.messaging().send({
+            //       notification: {
+            //         title: 'Fire Alert',
+            //         body: `Fire detected via image. Temp: ${sensorData.temperature}°C, Smoke: ${sensorData.smoke}`,
+            //       },
+            //       token,
+            //     });
+            //   } catch (err) {
+            //     console.error('Notification error:', err.message);
+            //   }
+            // }
+
+            await sendEmail(imageUrl);
+            console.log('Email sent successfully');
+            responseData.fire = true;
+            responseData.imageUrl = imageUrl;
+            responseData.message = `${responseData.message} | 🔥 Fire detected via image! Email alert sent.`;
+            return sendOnce(() => res.status(200).json(responseData));
+          } catch (err) {
+            console.error('Email sending failed:', err.message);
+            responseData.fire = true;
+            responseData.imageUrl = imageUrl;
+            responseData.message = `${responseData.message} | Fire detected via image, but failed to send email.`;
+            return sendOnce(() => res.status(500).json(responseData));
+          }
+        } else if (result === 'nofire') {
+          responseData.fire = false;
+          responseData.imageUrl = imageUrl;
+          responseData.message = `${responseData.message} | No fire detected in image.`;
+          return sendOnce(() => res.status(200).json(responseData));
+        } else {
+          return sendOnce(() =>
+            res.status(500).json({ error: 'Unexpected result from prediction script' })
+          );
+        }
+      });
+    } else {
+      // If no image, return sensor data response
+      return res.status(200).json(responseData);
+    }
+  } catch (err) {
+    console.error('Error processing request:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
 //export all functions
 module.exports = {
   receiveData,
@@ -262,5 +404,6 @@ module.exports = {
   getStatus,
   upload,
   predictImage,
-  webSocketFeed
+  webSocketFeed,
+  handleSensorDataAndImage
 }
