@@ -1,0 +1,20 @@
+/* History.css */
+.history-section {
+  padding: 2rem;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th,
+.history-table td {
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.history-table th {
+  background-color: #f0f0f0;
+}

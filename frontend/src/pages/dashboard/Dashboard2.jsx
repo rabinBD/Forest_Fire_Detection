@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 
 import defaultMapImage from "../../assets/map.png";
 import defaultForestImage from "../../assets/dashboard-forest.png";
+import LeafletMap from "../../components/LeafletMap";
 
 const Dashboard2 = () => {
   const [mapImage, setMapImage] = useState("");
@@ -75,11 +76,12 @@ const Dashboard2 = () => {
 
         <div className="top-section">
           <div className="map-container">
-            <img
+            {/* <img
               src={mapImage || defaultMapImage}
               alt="Map"
               className="map-image"
-            />
+            /> */}
+            <LeafletMap />
           </div>
           <div className="status-card">
             <h3>Status</h3>
