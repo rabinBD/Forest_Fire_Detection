@@ -22,7 +22,7 @@ const LeafletMap = ({ lat = 28.2096, lng = 83.9856 }) => {
   return (
     <div
       id="map"
-      style={{ width: "100%", height: "300px", borderRadius: "10px" }}
+      style={{ width: "100%", height: "200px", borderRadius: "10px" }}
     ></div>
   );
 };

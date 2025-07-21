@@ -43,9 +43,29 @@
 
 .top-section {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
+}
+
+/* STATUS CARD — larger width */
+.status-card {
+  flex: 2 1 65%;
+  padding: 1rem;
+  background-color: #fdfdfd;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  min-height: 300px; /* adjust if needed */
+}
+
+/* MAP CARD — smaller width */
+.map-container {
+  flex: 1 1 30%;
+  padding: 1rem;
+  background-color: #f0f4ff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  min-height: 300px; /* match status card height */
 }
 
 .map-container {
@@ -165,5 +185,16 @@
 
   .sensor-card {
     flex: 1;
+  }
+}
+/* Make layout stack on small screens */
+@media (max-width: 768px) {
+  .top-section {
+    flex-direction: column;
+  }
+
+  .status-card,
+  .map-container {
+    flex: 1 1 100%;
   }
 }

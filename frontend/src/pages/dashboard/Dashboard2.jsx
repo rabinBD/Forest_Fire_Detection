@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Dashboard2.css";
+
 import {
   FaUserCircle,
   FaHistory,
@@ -8,11 +9,10 @@ import {
   FaMicrochip,
   FaThLarge,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
-
-import defaultMapImage from "../../assets/map.png";
-import defaultForestImage from "../../assets/dashboard-forest.png";
 import LeafletMap from "../../components/LeafletMap";
+import defaultForestImage from "../../assets/dashboard-forest.png";
+import defaultMapImage from "../../assets/map.png";
+import fireImage from "../../assets/fire.png"; // 🔥 Add fire image to your assets folder
 
 const Dashboard2 = () => {
   const [mapImage, setMapImage] = useState("");
@@ -22,9 +22,11 @@ const Dashboard2 = () => {
   const [gas, setGas] = useState(null);
   const [fireStatus, setFireStatus] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+  const [showFireImage, setShowFireImage] = useState(false); // 👈 control fire image
+  const [flame, setFlame] = useState(null);
 
   useEffect(() => {
-    // Fetch map and forest image
+    // Load static images
     fetch("/api/map-image")
       .then((res) => res.json())
       .then((data) => setMapImage(data.url))
@@ -35,32 +37,42 @@ const Dashboard2 = () => {
       .then((data) => setForestImage(data.url))
       .catch(() => setForestImage(defaultForestImage));
 
-    // Fetch sensor data every 10 seconds
-    const fetchSensorData = () => {
-      fetch("http://localhost:8080/api/sensors/latest")
-        .then((res) => res.json())
-        .then((data) => {
-          setTemperature(data.temperature);
-          setHumidity(data.humidity);
-          setGas(data.gas);
+    // WebSocket for real-time sensor data
+    // const socket = new WebSocket(
+    //   "https://353a4b72fd16.ngrok-free.app/api/sensors/data"
+    // );
+      const socket = new WebSocket(
+        "https://353a4b72fd16.ngrok-free.app/api/sensors/data"
+      );
 
-          const fireDetected = data.fireDetected;
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === "sensor_update") {
+          const { temperature, humidity, smoke, flame } = message.data;
+
+          setTemperature(temperature);
+          setHumidity(humidity);
+          setGas(smoke);
+          setFlame(flame);
+
+          const fireDetected =
+            smoke > 100 || temperature > 50 || flame === true;
           setFireStatus(fireDetected ? "🔥 Fire Detected!" : "✅ Normal");
           setShowPopup(fireDetected);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch sensor data", err);
-        });
+          setShowFireImage(fireDetected); // 👈 show fire image when fire detected
+        }
+      } catch (err) {
+        console.error("WebSocket message error:", err);
+      }
     };
 
-    fetchSensorData();
-    const interval = setInterval(fetchSensorData, 10000);
-    return () => clearInterval(interval);
+    return () => socket.close();
   }, []);
 
   return (
     <section className="dashboard-container" id="dashboard-view">
-      {/* 🔥 Popup */}
+      {/* 🔥 Fire Alert Popup */}
       {showPopup && (
         <div className="popup-overlay">
           <div className="popup">
@@ -75,14 +87,6 @@ const Dashboard2 = () => {
         <h2 className="dashboard-title">Dashboard</h2>
 
         <div className="top-section">
-          <div className="map-container">
-            {/* <img
-              src={mapImage || defaultMapImage}
-              alt="Map"
-              className="map-image"
-            /> */}
-            <LeafletMap />
-          </div>
           <div className="status-card">
             <h3>Status</h3>
             <img
@@ -91,6 +95,24 @@ const Dashboard2 = () => {
               className="status-image"
             />
             <p>{fireStatus || "Status unavailable"}</p>
+
+            {/* 🔥 Fire Image Display */}
+            {showFireImage && (
+              <img
+                src={fireImage}
+                alt="Fire Detected"
+                className="fire-image"
+                style={{
+                  marginTop: "10px",
+                  width: "100%",
+                  borderRadius: "8px",
+                }}
+              />
+            )}
+          </div>
+
+          <div className="map-container">
+            <LeafletMap />
           </div>
         </div>
 
@@ -110,21 +132,30 @@ const Dashboard2 = () => {
             value={gas !== null ? `${gas} ppm` : "Loading..."}
             color="gray"
           />
+          <SensorCard
+            title="Flame"
+            value={
+              flame !== null
+                ? flame
+                  ? "🔥 Flame Detected"
+                  : "✅ No Flame"
+                : "Loading..."
+            }
+            color={flame ? "red" : "gray"} // Optional: color highlight for flame
+          />
         </div>
       </main>
     </section>
   );
 };
 
-const SensorCard = ({ title, value, color }) => {
-  return (
-    <div className={`sensor-card ${color}`}>
-      <h4>{title}</h4>
-      <div className="sensor-value">
-        <p>{value}</p>
-      </div>
+const SensorCard = ({ title, value, color }) => (
+  <div className={`sensor-card ${color}`}>
+    <h4>{title}</h4>
+    <div className="sensor-value">
+      <p>{value}</p>
     </div>
-  );
-};
+  </div>
+);
 
 export default Dashboard2;
