@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./Dashboard2.css";
+import "../../styles/Dashboard2.css";
 
 import {
   FaUserCircle,
@@ -37,13 +37,8 @@ const Dashboard2 = () => {
       .then((data) => setForestImage(data.url))
       .catch(() => setForestImage(defaultForestImage));
 
-    // WebSocket for real-time sensor data
-    // const socket = new WebSocket(
-    //   "https://353a4b72fd16.ngrok-free.app/api/sensors/data"
-    // );
-      const socket = new WebSocket(
-        "https://353a4b72fd16.ngrok-free.app/api/sensors/data"
-      );
+    // WebSocket connection to receive real-time sensor data
+    const socket = new WebSocket("ws://localhost:8080");
 
     socket.onmessage = (event) => {
       try {
@@ -149,7 +144,7 @@ const Dashboard2 = () => {
   );
 };
 
-const SensorCard = ({ title, value, color }) => (
+const SensorCard = ({ title, value, color, loading }) => (
   <div className={`sensor-card ${color}`}>
     <h4>{title}</h4>
     <div className="sensor-value">

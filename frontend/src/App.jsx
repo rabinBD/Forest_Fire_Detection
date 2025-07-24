@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { onMessageListener, messaging } from "../services/firebase";
 import "./App.css";
 import LandingPage from "./pages/landing/LandingPage";
-import Dashboard from "./pages/dashboard/Dashboard";
 import Dashboard2 from "./pages/dashboard/Dashboard2"; // updated dashboard
 import Signup from "./pages/auth/Signup";
 import Login from "./pages/auth/Login";
@@ -30,7 +29,6 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Nested Dashboard2 layout and its child pages */}
         <Route path="/dashboard2" element={<DashboardLayout />}>

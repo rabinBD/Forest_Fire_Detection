@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, Link } from "react-router-dom";
 import {
   FaUserCircle,
@@ -7,39 +7,56 @@ import {
   FaEnvelope,
   FaMicrochip,
   FaThLarge,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
-import "./Dashboard2.css";
+import "../../styles/Dashboard2.css";
 
 const DashboardLayout = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <h2>Menu</h2>
-        <Link to="" className="sidebar-link">
+      <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <h2>Menu</h2>
+          <button className="close-btn" onClick={closeSidebar}>
+            <FaTimes />
+          </button>
+        </div>
+        <Link to="" className="sidebar-link" onClick={closeSidebar}>
           <FaThLarge /> Dashboard
         </Link>
-        <Link to="history" className="sidebar-link">
+        <Link to="history" className="sidebar-link" onClick={closeSidebar}>
           <FaHistory /> History
         </Link>
-        <Link to="sensors" className="sidebar-link">
+        <Link to="sensors" className="sidebar-link" onClick={closeSidebar}>
           <FaMicrochip /> Sensors
         </Link>
-        <Link to="messages" className="sidebar-link">
+        <Link to="messages" className="sidebar-link" onClick={closeSidebar}>
           <FaEnvelope /> Messages
         </Link>
-        <Link to="settings" className="sidebar-link">
+        <Link to="settings" className="sidebar-link" onClick={closeSidebar}>
           <FaCog /> Settings
         </Link>
       </aside>
 
       <div className="dashboard-container">
         <nav className="navbar">
+          <button className="menu-btn" onClick={toggleSidebar}>
+            <FaBars />
+          </button>
           <h1 className="logo">FireGuard</h1>
           <FaUserCircle className="user-icon" />
         </nav>
 
         <main className="main-content">
-          {/* Renders the page component here */}
           <Outlet />
         </main>
       </div>
