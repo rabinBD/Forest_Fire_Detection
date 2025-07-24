@@ -10,26 +10,37 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send email with image URL
-const sendEmail = async (imageUrl) => {
+const sendEmail = async (imageUrl, temperature, humidity, gas) => {
+  const to = process.env.EMAIL_RECEIVER;
+  if (!to) {
+    console.error('EMAIL_RECEIVER not defined in .env');
+    return;
+  }
+
   try {
     const info = await transporter.sendMail({
       from: process.env.EMAIL_HOST,
-      to: process.env.EMAIL_RECEIVER,
-      subject: 'ALERT! Fire has been detected',
+      to,
+      subject: '🔥 ALERT! Fire has been detected 🔥',
       html: `
         <h2>Fire Detected!</h2>
-        <p>There has been a fire alert in location1. Act quickly as far as possible.
-        Thankyou!</p>
-        <img src="${imageUrl}" alt="Fire Image" style="max-width:100%; border-radius:6px;" />
-        <p><a href="${imageUrl}">View full image</a></p>
+        <p><strong>Location:</strong> Location 1</p>
+        <p><strong>Temperature:</strong> ${temperature}°C</p>
+        <p><strong>Humidity:</strong> ${humidity}°C</p>
+        <p><strong>Smoke Level:</strong> ${gas}</p>
+        <p><a href="${imageUrl}">View Full Image</a></p>
         <hr/>
         <small>Sent automatically by Forest Fire Detection System</small>
       `
-    })
-    console.log('Email sent: ' + info.response);
+    });
+
+    console.log('Email sent:', info.response);
   } catch (err) {
-    console.log("Error sending email: ", err.message);
+    console.error('Error sending email:', err.message);
   }
-}
+};
+
+
 
 module.exports = sendEmail;
+
