@@ -6,20 +6,34 @@ function initWebSocket(server) {
   const wss = new WebSocket.Server({ server });
 
   wss.on('connection', (ws) => {
-    console.log('Dashboard WebSocket connected');
+    console.log('🟢 WebSocket client connected');
     connectedClients.add(ws);
 
     ws.on('close', () => {
       connectedClients.delete(ws);
-      console.log('Dashboard WebSocket disconnected');
+      console.log('🔴 WebSocket client disconnected');
+    });
+
+    ws.on('error', (err) => {
+      console.error('❌ WebSocket error:', err.message);
+    });
+
+    // Optional: If you want to listen to messages from frontend
+    ws.on('message', (message) => {
+      console.log('📩 Received from client:', message);
+      // You can handle custom commands here
     });
   });
 
   const broadcast = (data) => {
     const message = JSON.stringify(data);
-    for (let client of connectedClients) {
+    for (const client of connectedClients) {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
+        try {
+          client.send(message);
+        } catch (err) {
+          console.error('❌ Error broadcasting to client:', err.message);
+        }
       }
     }
   };
@@ -27,4 +41,4 @@ function initWebSocket(server) {
   return { broadcast };
 }
 
-module.exports = {initWebSocket};
+module.exports = { initWebSocket };

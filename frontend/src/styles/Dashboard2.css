@@ -61,6 +61,14 @@ body {
   margin-bottom: 1rem;
 }
 
+.sidebar-logo {
+  font-family: "Orbitron", sans-serif;
+  font-size: 1.5rem;
+  color: white;
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+
 .sidebar .sidebar-link {
   text-decoration: none;
   color: white;
@@ -104,7 +112,7 @@ body {
   background-color: #f1f3f9;
   box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
   border-radius: 6px;
-  height: auto;
+  height: 280px;
 }
 
 .status-image {
@@ -162,7 +170,7 @@ body {
   /* box-shadow: rgba(139, 139, 152, 0.2) 0px 7px 29px 0px; */
   width: 100px;
   height: 100px;
-  border: 6px solid #f3f3f3; 
+  border: 6px solid #f3f3f3;
   border-radius: 50%;
 }
 

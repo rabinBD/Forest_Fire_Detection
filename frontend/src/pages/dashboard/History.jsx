@@ -10,58 +10,57 @@ function History() {
     const fetchData = async () => {
       try {
         const res = await fetch("http://localhost:8080/api/sensors/data");
-        const result = await res.json(); // result = { success: true, data: [...] }
-        console.log("📥 Fetched from API:", result);
+        const result = await res.json();
 
         if (result.success && Array.isArray(result.data)) {
-          setHistory(result.data); // ✅ use only the array part
+          setHistory(result.data);
           localStorage.setItem("sensorHistory", JSON.stringify(result.data));
         } else {
           console.warn("⚠️ API response malformed:", result);
         }
-        setLoading(false);
       } catch (err) {
         console.error("⚠️ Failed to fetch from API, loading from cache", err);
         const cached = localStorage.getItem("sensorHistory");
         if (cached) {
           setHistory(JSON.parse(cached));
         }
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
 
-    // WebSocket
-    const ws = new WebSocket("ws://localhost:8080");
+    // ✅ CORRECTED WebSocket URL (must use wss://)
+    const ws = new WebSocket("wss://d8bd8ca2aebd.ngrok-free.app");
     wsRef.current = ws;
 
-    ws.onopen = () => {
-      console.log("✅ WebSocket connected");
-    };
+    ws.onopen = () => console.log("✅ WebSocket connected to history");
 
     ws.onmessage = (event) => {
-      const newEntry = JSON.parse(event.data);
-      console.log("📡 New data received:", newEntry);
+      try {
+        const newEntry = JSON.parse(event.data);
+        console.log("📡 Live data received:", newEntry);
 
-      setHistory((prev) => {
-        const updated = [newEntry, ...prev];
-        localStorage.setItem("sensorHistory", JSON.stringify(updated));
-        return updated;
-      });
+        setHistory((prev) => {
+          const updated = [newEntry, ...prev].slice(0, 50);
+          localStorage.setItem("sensorHistory", JSON.stringify(updated));
+          return updated;
+        });
+      } catch (err) {
+        console.error("❌ Error parsing WebSocket message:", err);
+      }
     };
 
     ws.onerror = (err) => console.error("WebSocket error:", err);
-    ws.onclose = () => console.log("❌ WebSocket disconnected");
+    ws.onclose = () => console.log("❌ WebSocket disconnected from history");
 
-    return () => {
-      ws.close();
-    };
+    return () => ws.close();
   }, []);
 
   return (
     <section className="history-section" id="history">
-      <h2>Alert & Sensor History</h2>
+      <h2>📊 Live Alert & Sensor History</h2>
       {loading ? (
         <p>Loading...</p>
       ) : history.length === 0 ? (
@@ -80,9 +79,13 @@ function History() {
           <tbody>
             {history.map((entry, idx) => (
               <tr key={idx}>
-                <td>{new Date(entry.timestamp).toLocaleString()}</td>
-                <td>{entry.temperature}</td>
-                <td>{entry.smoke}</td>
+                <td>
+                  {entry.timestamp
+                    ? new Date(entry.timestamp).toLocaleString()
+                    : "N/A"}
+                </td>
+                <td>{entry.temperature ?? "N/A"}</td>
+                <td>{entry.smoke ?? "N/A"}</td>
                 <td>{entry.flame ? "Yes" : "No"}</td>
                 <td style={{ color: entry.fireDetected ? "red" : "green" }}>
                   {entry.fireDetected ? "🔥 Fire Detected" : "✅ Normal"}

@@ -38,21 +38,23 @@ const Dashboard2 = () => {
       .catch(() => setForestImage(defaultForestImage));
 
     // WebSocket connection to receive real-time sensor data
-    const socket = new WebSocket("ws://localhost:8080");
+    const socket = new WebSocket(
+      "https://d8bd8ca2aebd.ngrok-free.app/api/sensors/data"
+    );
+    //ws://localhost:8080
 
-    socket.onmessage = (event) => {
+    ws: socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         if (message.type === "sensor_update") {
-          const { temperature, humidity, smoke, flame } = message.data;
+          const { temperature, humidity, gas, flame } = message.data;
 
           setTemperature(temperature);
           setHumidity(humidity);
-          setGas(smoke);
+          setGas(gas);
           setFlame(flame);
 
-          const fireDetected =
-            smoke > 100 || temperature > 50 || flame === true;
+          const fireDetected = gas > 100 || temperature > 50 || flame === true;
           setFireStatus(fireDetected ? "🔥 Fire Detected!" : "✅ Normal");
           setShowPopup(fireDetected);
           setShowFireImage(fireDetected); // 👈 show fire image when fire detected

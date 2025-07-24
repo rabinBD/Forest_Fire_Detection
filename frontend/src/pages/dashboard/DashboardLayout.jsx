@@ -9,8 +9,10 @@ import {
   FaThLarge,
   FaBars,
   FaTimes,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import "../../styles/Dashboard2.css";
+import "../../styles/Popup.css";
 
 const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -25,7 +27,9 @@ const DashboardLayout = () => {
     <div className="layout">
       <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
         <div className="sidebar-header">
-          <h2>Menu</h2>
+          <a href="#home" className="sidebar-logo">
+            <h2>FireGuard</h2>
+          </a>
           <button className="close-btn" onClick={closeSidebar}>
             <FaTimes />
           </button>
@@ -36,14 +40,17 @@ const DashboardLayout = () => {
         <Link to="history" className="sidebar-link" onClick={closeSidebar}>
           <FaHistory /> History
         </Link>
-        <Link to="sensors" className="sidebar-link" onClick={closeSidebar}>
+        {/* <Link to="sensors" className="sidebar-link" onClick={closeSidebar}>
           <FaMicrochip /> Sensors
-        </Link>
-        <Link to="messages" className="sidebar-link" onClick={closeSidebar}>
+        </Link> */}
+        {/* <Link to="messages" className="sidebar-link" onClick={closeSidebar}>
           <FaEnvelope /> Messages
-        </Link>
+        </Link> */}
         <Link to="settings" className="sidebar-link" onClick={closeSidebar}>
           <FaCog /> Settings
+        </Link>
+        <Link to="/login" className="sidebar-link" onClick={closeSidebar}>
+          <FaSignOutAlt /> Logout
         </Link>
       </aside>
 
