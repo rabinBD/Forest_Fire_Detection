@@ -61,7 +61,7 @@ const webSocketFeed = async (req, res, broadcast) => {
     // Send to WebSocket clients
     broadcast({
       type: 'sensor_update',
-      data: data,
+      data,
     });
 
     res.status(200).json({ success: true, message: 'Sensor data received' });
@@ -102,6 +102,7 @@ const getLatestSensorData = async (req, res) => {
         temperature: null,
         humidity: null,
         gas: null,
+        flame: null,
         fireDetected: null,
       });
     }

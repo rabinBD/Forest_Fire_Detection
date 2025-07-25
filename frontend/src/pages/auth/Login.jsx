@@ -61,7 +61,7 @@ const Login = () => {
 
 
       alert("Login successful");
-      navigate("/dashboard");
+      navigate("/dashboard2");
     } catch (error) {
       console.error("Login error:", error);
       alert(error.response?.data?.message || "Login failed");

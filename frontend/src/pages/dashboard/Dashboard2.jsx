@@ -1,144 +1,158 @@
-// Dashboard.jsx
-import React, { useEffect, useState, useRef } from "react";
-import "./Dashboard2.css";
-import { FaUserCircle } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import "../../styles/Dashboard2.css";
+
 import {
+  FaUserCircle,
   FaHistory,
   FaCog,
   FaEnvelope,
   FaMicrochip,
   FaThLarge,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
-
-// ✅ Import default images from assets folder
-import defaultMapImage from "../../assets/map.png";
+import LeafletMap from "../../components/LeafletMap";
 import defaultForestImage from "../../assets/dashboard-forest.png";
+import defaultMapImage from "../../assets/map.png";
+import fireImage from "../../assets/fire.png"; // 🔥 Add fire image to your assets folder
 
 const Dashboard2 = () => {
   const [mapImage, setMapImage] = useState("");
   const [forestImage, setForestImage] = useState("");
-  const [statusText, setStatusText] = useState("");
-  const [temperatureData, setTemperatureData] = useState([]);
-  const [humidityData, setHumidityData] = useState([]);
-  const [gasData, setGasData] = useState([]);
+  const [temperature, setTemperature] = useState(null);
+  const [humidity, setHumidity] = useState(null);
+  const [gas, setGas] = useState(null);
+  const [fireStatus, setFireStatus] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [showFireImage, setShowFireImage] = useState(false); // 👈 control fire image
+  const [flame, setFlame] = useState(null);
 
   useEffect(() => {
-    // ✅ Replace with your real API endpoints
+    // Load static images
     fetch("/api/map-image")
       .then((res) => res.json())
       .then((data) => setMapImage(data.url))
-      .catch(() => setMapImage(defaultMapImage)); // fallback to local image
+      .catch(() => setMapImage(defaultMapImage));
 
     fetch("/api/forest-image")
       .then((res) => res.json())
       .then((data) => setForestImage(data.url))
       .catch(() => setForestImage(defaultForestImage));
 
-    fetch("/api/status")
-      .then((res) => res.json())
-      .then((data) => setStatusText(data.status))
-      .catch(() => setStatusText("Status unavailable"));
+    // WebSocket connection to receive real-time sensor data
+    const socket = new WebSocket(
+      "https://d8bd8ca2aebd.ngrok-free.app/api/sensors/data"
+    );
+    //ws://localhost:8080
 
-    fetch("/api/sensor-data")
-      .then((res) => res.json())
-      .then((data) => {
-        setTemperatureData(data.temperature);
-        setHumidityData(data.humidity);
-        setGasData(data.gas);
-      })
-      .catch(() => {
-        setTemperatureData([]);
-        setHumidityData([]);
-        setGasData([]);
-      });
+    ws: socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === "sensor_update") {
+          const { temperature, humidity, gas, flame } = message.data;
+
+          setTemperature(temperature);
+          setHumidity(humidity);
+          setGas(gas);
+          setFlame(flame);
+
+          const fireDetected = gas > 100 || temperature > 50 || flame === true;
+          setFireStatus(fireDetected ? "🔥 Fire Detected!" : "✅ Normal");
+          setShowPopup(fireDetected);
+          setShowFireImage(fireDetected); // 👈 show fire image when fire detected
+        }
+      } catch (err) {
+        console.error("WebSocket message error:", err);
+      }
+    };
+
+    return () => socket.close();
   }, []);
 
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <h2>Menu</h2>
-        <Link to="#dashboard" className="sidebar-link">
-          <FaThLarge />
-          Dashboard
-        </Link>
-        <Link to="#history" className="sidebar-link">
-          <FaHistory />
-          History
-        </Link>
-        <Link to="#sensors" className="sidebar-link">
-          <FaMicrochip /> Sensors
-        </Link>
-        <Link to="#messages" className="sidebar-link">
-          <FaEnvelope /> Messages
-        </Link>
-        <Link to="#settings" className="sidebar-link">
-          <FaCog /> Settings
-        </Link>
-      </aside>
-
-      <div className="dashboard-container">
-        <nav className="navbar">
-          <h1 className="logo">FireGuard</h1>
-          <FaUserCircle className="user-icon" />
-        </nav>
-
-        <main className="main-content" id="dashboard">
-          <h2 className="dashboard-title">Dashboard</h2>
-
-          <div className="top-section">
-            <div className="map-container">
-              <img
-                src={mapImage || defaultMapImage}
-                alt="Map"
-                className="map-image"
-              />
-            </div>
-            <div className="status-card">
-              <h3>Status</h3>
-              <img
-                src={forestImage || defaultForestImage}
-                alt="Forest Status"
-                className="status-image"
-              />
-              <p>{statusText}</p>
-            </div>
+    <section className="dashboard-container" id="dashboard-view">
+      {/* 🔥 Fire Alert Popup */}
+      {showPopup && (
+        <div className="popup-overlay">
+          <div className="popup">
+            <h2>🚨 Fire Detected!</h2>
+            <p>Temperature and smoke levels are above normal.</p>
+            <button onClick={() => setShowPopup(false)}>Close</button>
           </div>
+        </div>
+      )}
 
-          <div className="cards-container" id="sensors">
-            <SensorCard
-              title="Temperature"
-              data={temperatureData}
-              color="red"
+      <main className="main-content" id="dashboard">
+        <h2 className="dashboard-title">Dashboard</h2>
+
+        <div className="top-section">
+          <div className="status-card">
+            <h3>Status</h3>
+            <img
+              src={forestImage || defaultForestImage}
+              alt="Forest Status"
+              className="status-image"
             />
-            <SensorCard title="Humidity" data={humidityData} color="green" />
-            <SensorCard title="Gas" data={gasData} color="gray" />
+            <p>{fireStatus || "Status unavailable"}</p>
+
+            {/* 🔥 Fire Image Display */}
+            {showFireImage && (
+              <img
+                src={fireImage}
+                alt="Fire Detected"
+                className="fire-image"
+                style={{
+                  marginTop: "10px",
+                  width: "100%",
+                  borderRadius: "8px",
+                }}
+              />
+            )}
           </div>
-        </main>
-      </div>
-    </div>
+
+          <div className="map-container">
+            <LeafletMap />
+          </div>
+        </div>
+
+        <div className="cards-container" id="sensors">
+          <SensorCard
+            title="Temperature"
+            value={temperature !== null ? `${temperature} °C` : "Loading..."}
+            color="red"
+          />
+          <SensorCard
+            title="Humidity"
+            value={humidity !== null ? `${humidity} %` : "Loading..."}
+            color="green"
+          />
+          <SensorCard
+            title="Gas"
+            value={gas !== null ? `${gas} ppm` : "Loading..."}
+            color="gray"
+          />
+          <SensorCard
+            title="Flame"
+            value={
+              flame !== null
+                ? flame
+                  ? "🔥 Flame Detected"
+                  : "✅ No Flame"
+                : "Loading..."
+            }
+            color={flame ? "red" : "gray"} // Optional: color highlight for flame
+          />
+        </div>
+      </main>
+    </section>
   );
 };
 
-const SensorCard = ({ title, data, color }) => {
-  return (
-    <div className={`sensor-card ${color}`}>
-      <h4>{title}</h4>
-      <div className="chart-placeholder">
-        {data.length > 0 ? (
-          data.map((value, index) => (
-            <div
-              key={index}
-              className="bar"
-              style={{ height: `${value / 5}px` }}
-            ></div>
-          ))
-        ) : (
-          <p>Loading...</p>
-        )}
-      </div>
+const SensorCard = ({ title, value, color, loading }) => (
+  <div className={`sensor-card ${color}`}>
+    <h4>{title}</h4>
+    <div className="sensor-value">
+      <p>{value}</p>
     </div>
-  );
-};
+  </div>
+);
 
 export default Dashboard2;

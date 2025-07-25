@@ -8,7 +8,9 @@ const Footer = () => {
     <footer className="footer">
       <div className="footer-container">
         <div className="footer-about">
-          <h2>FireGuard</h2>
+          <a href="#home">
+            <h2>FireGuard</h2>
+          </a>
           <p>
             An IoT-based forest fire detection system powered by TinyML. Built
             by Computer Engineering students of Pokhara University to protect
@@ -19,10 +21,18 @@ const Footer = () => {
         <div className="footer-links">
           <h3>Quick Links</h3>
           <ul>
-            <li>Home</li>
-            <li>About</li>
-            <li>Features</li>
-            <li>Contact</li>
+            <a href="#home">
+              <li>Home</li>
+            </a>
+            <a href="#about">
+              <li>About</li>
+            </a>
+            <a href="#features">
+              <li>Features</li>
+            </a>
+            <a href="#contact">
+              <li>Contact</li>
+            </a>
           </ul>
         </div>
 
