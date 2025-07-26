@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "../../styles/Dashboard2.css";
+import { FaTemperatureHigh } from "react-icons/fa";
+import { WiHumidity } from "react-icons/wi";
+import { FaCloud } from "react-icons/fa";
+import { FaFireFlameCurved } from "react-icons/fa6";
+import { FaShieldAlt } from "react-icons/fa";
 
 import {
   FaUserCircle,
@@ -13,7 +18,6 @@ import LeafletMap from "../../components/LeafletMap";
 import defaultForestImage from "../../assets/dashboard-forest.png";
 import defaultMapImage from "../../assets/map.png";
 import fireImage from "../../assets/fire.png"; // Add fire image to your assets folder
-
 
 const Dashboard2 = () => {
   const [mapImage, setMapImage] = useState("");
@@ -67,9 +71,11 @@ const Dashboard2 = () => {
 
           // If fire detected, fetch latest fire event image
           if (fireDetected) {
-            fetch('http://localhost:8080/api/sensors/getDetectData?limit=1&page=1')
-              .then(res => res.json())
-              .then(data => {
+            fetch(
+              "http://localhost:8080/api/sensors/getDetectData?limit=1&page=1"
+            )
+              .then((res) => res.json())
+              .then((data) => {
                 if (data.success && data.data && data.data[0]?.imageUrl) {
                   setFireEventImage(data.data[0].imageUrl);
                 } else {
@@ -89,7 +95,7 @@ const Dashboard2 = () => {
     // Fetch notification suppression status from backend API
     const fetchSuppression = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/notify/suppression');
+        const res = await fetch("http://localhost:8080/api/notify/suppression");
         const data = await res.json();
         setIsSuppressed(!!data.longSuppression);
       } catch (err) {
@@ -101,10 +107,8 @@ const Dashboard2 = () => {
     return () => socket.close();
   }, []);
 
-
-
   return (
-    <section className="dashboard-container" id="dashboard-view">
+    <section className="dash" id="dashboard-view">
       {/*  Fire Alert Popup */}
       {showPopup && (
         <div className="popup-overlay">
@@ -116,45 +120,25 @@ const Dashboard2 = () => {
         </div>
       )}
 
-   
-
       <main className="main-content" id="dashboard">
-        <h2 className="dashboard-title">Dashboard</h2>
-
-        <div className="top-section">
-          <div className="status-card">
-            <h3>Status</h3>
-            <img
-              src={showFireImage && fireEventImage ? fireEventImage : (forestImage || defaultForestImage)}
-              alt={showFireImage && fireEventImage ? "Fire Event" : "Forest Status"}
-              className="status-image"
-              style={{ border: showFireImage ? "2px solid red" : "none" }}
-            />
-            <p style={{ color: showFireImage ? "red" : "green", fontWeight: "bold" }}>
-              {showFireImage ? "🔥 Fire Detected!" : "✅ Normal"}
-            </p>
-          </div>
-
-          <div className="map-container">
-            <LeafletMap />
-          </div>
-        </div>
-
         <div className="cards-container" id="sensors">
           <SensorCard
             title="Temperature"
             value={temperature !== null ? `${temperature} °C` : "Loading..."}
             color="red"
+            icon={<FaTemperatureHigh size={30} color="red" />}
           />
           <SensorCard
             title="Humidity"
             value={humidity !== null ? `${humidity} %` : "Loading..."}
             color="green"
+            icon={<WiHumidity size={50} color="blue" />}
           />
           <SensorCard
             title="Gas"
             value={gas !== null ? `${gas} ppm` : "Loading..."}
             color="gray"
+            icon={<FaCloud size={40} color="yellow" />}
           />
           <SensorCard
             title="Flame"
@@ -166,19 +150,65 @@ const Dashboard2 = () => {
                 : "Loading..."
             }
             color={flame ? "red" : "gray"} // Optional: color highlight for flame
+            icon={<FaFireFlameCurved size={30} color="red" />}
           />
+        </div>
+
+        <div className="top-section">
+          <div className="status-card">
+            {/* <h3>Status</h3>
+            <img
+              src={
+                showFireImage && fireEventImage
+                  ? fireEventImage
+                  : forestImage || defaultForestImage
+              }
+              alt={
+                showFireImage && fireEventImage ? "Fire Event" : "Forest Status"
+              }
+              className="status-image"
+              style={{ border: showFireImage ? "2px solid red" : "none" }}
+            />
+            <p
+              style={{
+                color: showFireImage ? "red" : "green",
+                fontWeight: "bold",
+              }}
+            >
+              {showFireImage ? "🔥 Fire Detected!" : "✅ Normal"}
+            </p> */}
+
+            <div className="chart-container bg-gradient-to-r from-green-500 to-blue-500 h-full flex justify-center items-center text-white">
+              <div className="text-center">
+                <div className="icon-div">
+                  <FaShieldAlt size={36} className="opacity-80" />
+                </div>
+                <p className="text-lg font-medium">System Status: Normal</p>
+                <p className="text-sm opacity-80 mt-2">
+                  All sensors operating within normal parameters
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="map-container">
+            <LeafletMap />
+          </div>
         </div>
       </main>
     </section>
   );
 };
 
-const SensorCard = ({ title, value, color, loading }) => (
+const SensorCard = ({ title, value, color, loading, icon }) => (
   <div className={`sensor-card ${color}`}>
-    <h4>{title}</h4>
-    <div className="sensor-value">
-      <p>{value}</p>
+    <div className="sensor-content">
+      <h4>{title}</h4>
+      <div className="sensor-value">
+        <p>{value}</p>
+      </div>
     </div>
+    <div className="icon">{icon}</div>
   </div>
 );
 

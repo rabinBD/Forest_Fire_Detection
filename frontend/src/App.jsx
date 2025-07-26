@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import { useEffect } from "react";
 import { onMessageListener, messaging } from "../services/firebase";
-import "./App.css";
+// import "./App.css";
 import LandingPage from "./pages/landing/LandingPage";
 import Dashboard2 from "./pages/dashboard/Dashboard2"; // updated dashboard
 import Signup from "./pages/auth/Signup";

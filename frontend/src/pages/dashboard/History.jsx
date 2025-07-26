@@ -15,7 +15,9 @@ function History() {
   const fetchSensorHistory = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/sensors/getSensorHistory?limit=${limit}&page=${sensorPage}`);
+      const res = await fetch(
+        `http://localhost:8080/api/sensors/getSensorHistory?limit=${limit}&page=${sensorPage}`
+      );
       const result = await res.json();
       if (result.success) {
         setSensorHistory(result.data);
@@ -35,7 +37,9 @@ function History() {
   const fetchFireHistory = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/sensors/getDetectData?limit=${limit}&page=${firePage}`);
+      const res = await fetch(
+        `http://localhost:8080/api/sensors/getDetectData?limit=${limit}&page=${firePage}`
+      );
       const result = await res.json();
       if (result.success) {
         setFireHistory(result.data);
@@ -53,7 +57,24 @@ function History() {
 
   return (
     <section className="history-section" id="history">
-      <h2>Sensor History <button style={{marginLeft:8}} onClick={fetchSensorHistory}>Refresh</button></h2>
+      <h2>
+        Sensor History{" "}
+        <button
+          style={{
+            marginLeft: 8,
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            padding: "8px 12px",
+            borderRadius: "4px",
+            cursor: "pointer",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          }}
+          onClick={fetchSensorHistory}
+        >
+          Refresh
+        </button>
+      </h2>
       {loading ? (
         <p>Loading...</p>
       ) : sensorHistory.length === 0 ? (
@@ -81,9 +102,21 @@ function History() {
         </tbody>
       </table>
           <div className="pagination">
-            <button disabled={sensorPage === 1} onClick={() => setSensorPage(sensorPage - 1)}>Prev</button>
-            <span>Page {sensorPage} of {sensorTotalPages}</span>
-            <button disabled={sensorPage === sensorTotalPages} onClick={() => setSensorPage(sensorPage + 1)}>Next</button>
+            <button
+              disabled={sensorPage === 1}
+              onClick={() => setSensorPage(sensorPage - 1)}
+            >
+              Prev
+            </button>
+            <span>
+              Page {sensorPage} of {sensorTotalPages}
+            </span>
+            <button
+              disabled={sensorPage === sensorTotalPages}
+              onClick={() => setSensorPage(sensorPage + 1)}
+            >
+              Next
+            </button>
           </div>
         </>
       )}
@@ -122,9 +155,21 @@ function History() {
         </tbody>
       </table>
           <div className="pagination">
-            <button disabled={firePage === 1} onClick={() => setFirePage(firePage - 1)}>Prev</button>
-            <span>Page {firePage} of {fireTotalPages}</span>
-            <button disabled={firePage === fireTotalPages} onClick={() => setFirePage(firePage + 1)}>Next</button>
+            <button
+              disabled={firePage === 1}
+              onClick={() => setFirePage(firePage - 1)}
+            >
+              Prev
+            </button>
+            <span>
+              Page {firePage} of {fireTotalPages}
+            </span>
+            <button
+              disabled={firePage === fireTotalPages}
+              onClick={() => setFirePage(firePage + 1)}
+            >
+              Next
+            </button>
           </div>
         </>
       )}

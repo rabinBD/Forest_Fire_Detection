@@ -15,21 +15,34 @@ body {
   background-color: white;
   min-height: 100vh;
   width: 100%;
+  margin-left: 256px;
+  position: relative;
 }
 
 .navbar {
-  background-color: #005a2c;
-  color: white;
+  background-color: white;
+  color: black;
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  box-shadow: 0px 1px 2px -1px rgba(138, 136, 136, 0.7);
 }
 
 .logo {
   font-size: 1.5rem;
   font-weight: bold;
-  font-family: "Orbitron", sans-serif;
+  font-family: "Open Sans", sans-serif;
+}
+
+.main-content {
+  background-color: #f8fafc;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .user-icon {
@@ -42,57 +55,83 @@ body {
 }
 
 .sidebar {
-  width: 20%;
-  background-color: #003d1f;
-  color: white;
+  width: 256px;
+  background-color: #ffffff;
+  color: black;
   display: flex;
   flex-direction: column;
   padding: 1.5rem 1rem;
-  gap: 1.2rem;
-  position: sticky;
+  gap: 0.4rem;
+  position: fixed;
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  box-shadow: 1px 0px 2px -1px rgba(142, 139, 139, 0.7);
+  z-index: 100;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.logo-content-container {
+  display: flex;
+  flex-direction: column;
+  color: black;
 }
 
 .sidebar h2 {
   font-family: "Orbitron", sans-serif;
   font-size: 1.2rem;
   margin-bottom: 1rem;
+  font-weight: bold;
 }
 
 .sidebar-logo {
   font-family: "Orbitron", sans-serif;
   font-size: 1.5rem;
-  color: white;
+  color: black;
   text-decoration: none;
+  margin-bottom: 1rem;
+}
+
+.icon-div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 1rem;
 }
 
 .sidebar .sidebar-link {
   text-decoration: none;
-  color: white;
+  color: black;
   font-weight: 500;
   padding: 0.5rem;
   border-radius: 4px;
   transition: background 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
 }
 
 .sidebar .sidebar-link:hover,
 .sidebar .sidebar-link:focus,
 .sidebar .sidebar-link.active {
-  background-color: #006400;
+  background-color: #daf1e4;
   transform: translateX(5px);
   outline: none;
+  color: #176a3a;
+}
+
+.sensor-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .sidebar svg {
   margin-right: 8px;
-}
-
-.main-content {
-  flex: 1;
-  padding: 2rem;
 }
 
 .dashboard-title {
@@ -101,16 +140,18 @@ body {
 }
 
 .top-section {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: 1fr;
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
   gap: 1rem;
-  margin-bottom: 2rem;
 }
 
 .status-card {
   padding: 1rem;
   background-color: #f1f3f9;
-  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  box-shadow: 0px 0px 8px -2px rgba(65, 62, 62, 0.66);
   border-radius: 6px;
   height: 280px;
 }
@@ -126,7 +167,7 @@ body {
   padding: 1rem;
   background-color: #f0f3fa;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 0px 8px -2px rgba(65, 62, 62, 0.66);
   height: auto;
 }
 
@@ -148,20 +189,23 @@ body {
   border-radius: 6px;
   box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  flex-wrap: wrap;
   /* justify-content: center; */
   /* height: 40vh; */
   /* font-family: "Open Sans", sans-serif; */
   /* color: #006400; */
   text-align: center;
-  gap: 1rem;
+  gap: 2rem;
+  justify-content: space-between;
+  box-shadow: 0px 0px 8px -2px rgba(65, 62, 62, 0.66);
 }
 
 .sensor-card h4 {
   text-align: center;
-  font-size: 1.5rem;
-  color: #006400;
+  font-size: 14px;
+  color: rgb(61, 60, 60);
+  font-weight: 600;
 }
 
 .sensor-card .sensor-value {
@@ -172,6 +216,9 @@ body {
   height: 100px;
   border: 6px solid #f3f3f3;
   border-radius: 50%;
+  color: #006400;
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .chart-placeholder {
@@ -191,7 +238,7 @@ body {
 @media (min-width: 768px) {
   .top-section {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   .cards-container {
@@ -244,8 +291,10 @@ body {
 /* Sidebar toggle styles */
 .sidebar-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  border-color: rgb(216, 214, 214);
+  border-bottom-width: 1px;
 }
 
 .close-btn {
@@ -254,6 +303,11 @@ body {
   color: white;
   font-size: 1.3rem;
   cursor: pointer;
+}
+
+.dash {
+  /* background-color: #f8fafc; */
+  background-color: red;
 }
 
 /* For mobile: overlay sidebar */
@@ -283,12 +337,10 @@ body {
     display: block;
   }
 
-  .dashboard-container {
-    width: 100%;
-  }
-
   .main-content {
-    padding: 1rem;
+    background-color: #f8fafc;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 
   .sidebar .sidebar-link {

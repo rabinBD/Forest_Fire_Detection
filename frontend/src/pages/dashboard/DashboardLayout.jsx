@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   FaUserCircle,
   FaHistory,
@@ -21,6 +21,9 @@ const DashboardLayout = () => {
     setIsSidebarOpen((prev) => !prev);
   };
 
+  const location = useLocation();
+  console.log(location);
+
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
@@ -35,10 +38,10 @@ const DashboardLayout = () => {
           </button>
         </div>
         <Link to="" className="sidebar-link" onClick={closeSidebar}>
-          <FaThLarge /> Dashboard
+          <FaThLarge /> <span>Dashboard</span>
         </Link>
         <Link to="history" className="sidebar-link" onClick={closeSidebar}>
-          <FaHistory /> History
+          <FaHistory /> <span>History</span>
         </Link>
         {/* <Link to="sensors" className="sidebar-link" onClick={closeSidebar}>
           <FaMicrochip /> Sensors
@@ -47,13 +50,10 @@ const DashboardLayout = () => {
           <FaEnvelope /> Messages
         </Link> */}
         <Link to="settings" className="sidebar-link" onClick={closeSidebar}>
-          <FaCog /> Settings
+          <FaCog /> <span>Settings</span>
         </Link>
-        <Link to="/login" className="sidebar-link" onClick={() => { 
-          localStorage.removeItem('token'); 
-          closeSidebar(); 
-        }}>
-          <FaSignOutAlt /> Logout
+        <Link to="/login" className="sidebar-link" onClick={closeSidebar}>
+          <FaSignOutAlt /> <span>Logout</span>
         </Link>
       </aside>
 
@@ -62,8 +62,22 @@ const DashboardLayout = () => {
           <button className="menu-btn" onClick={toggleSidebar}>
             <FaBars />
           </button>
-          <h1 className="logo">FireGuard</h1>
-          <FaUserCircle className="user-icon" />
+          <h1 className="logo">
+            {location.pathname === "/dashboard2"
+              ? "Dashboard"
+              : location.pathname === "/dashboard2/settings"
+              ? "Settings"
+              : "History"}
+          </h1>
+          <div className="logo-container">
+            <div className="logo-content-container">
+              <div className="font-bold text-sm text-gray-600">Admin</div>
+              <div className="text-sm font-semibold text-gray-600">
+                laxmi@gmail.com
+              </div>
+            </div>
+            <FaUserCircle className="user-icon" />
+          </div>
         </nav>
 
         <main className="main-content">
