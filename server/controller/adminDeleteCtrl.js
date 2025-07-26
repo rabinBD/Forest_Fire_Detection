@@ -1,15 +1,13 @@
-const admin = require('firebase-admin');
-const {db} = admin.firestore();
+const {db,admin} = require('../config/firebase');
 
-
-// Check admin status via Firestore 'admins' collection using Firebase UID
+// Check admin status from Firestore 'users' collection
 async function isAdmin(user) {
   if (!user || !user.uid) return false;
-  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  const adminDoc = await db.collection('users').doc(user.uid).get();
   return adminDoc.exists && adminDoc.data().role === 'admin';
 }
 
-exports.deleteAllSuppressionLogs = async (req, res) => {
+const deleteAllSuppressionLogs = async (req, res) => {
   if (!(await isAdmin(req.user))) return res.status(403).json({ success: false, message: 'Admin only.' });
   try {
     const snapshot = await db.collection('suppression_logs').get();
@@ -23,5 +21,7 @@ exports.deleteAllSuppressionLogs = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+module.exports = { deleteAllSuppressionLogs };
 
 // All delete-related modules have been removed as requested.

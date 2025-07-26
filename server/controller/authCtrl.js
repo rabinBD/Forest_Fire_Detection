@@ -296,7 +296,7 @@ const loginController = async (req, res) => {
     const userRecord = await auth.getUserByEmail(email);
 
     // Check if user exists in admins collection
-    const userDoc = await db.collection('admins').doc(userRecord.uid).get();
+    const userDoc = await db.collection('users').doc(userRecord.uid).get();
 
     if (!userDoc.exists) {
       return res.status(401).json({
