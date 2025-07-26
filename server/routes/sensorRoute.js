@@ -21,7 +21,7 @@ module.exports = function (broadcast) {
 
   router.get('/getSensorHistory', getSensorHistory)
 
-  router.delete('/deleteHistory/:date', auth, deleteHistoryByDate);
+  // router.delete('/deleteHistory/:date', auth, deleteHistoryByDate);
 
   return router;
 };
