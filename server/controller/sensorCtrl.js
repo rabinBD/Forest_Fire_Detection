@@ -156,19 +156,19 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
       const temperature = req.body.temperature ? parseFloat(req.body.temperature) : null;
       const humidity = req.body.humidity ? parseFloat(req.body.humidity) : null;
       const gas = req.body.gas ? parseFloat(req.body.gas) : null;
-      const fireDetected = req.body.flame && req.body.flame.toLowerCase() === 'detected';
+      const flameDetected = req.body.flame && req.body.flame.toLowerCase() === 'detected';
 
       const sensorData = {
         temperature,
         humidity,
         gas,
-        fireDetected,
+        flameDetected,
         timestamp: new Date().toLocaleString(),
       };
 
       latestSensorData = sensorData;
 
-      if (temperature || humidity || gas) {
+      if (temperature || humidity || gas ) {
         await db.collection('fire_readings_new').add(sensorData);
 
         broadcast({
@@ -275,6 +275,18 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
             }));
           } else if (result === 'nofire') {
             console.log('No fire detected.');
+
+            const noFireRecord = {
+              imageUrl,
+              timestamp: new Date().toLocaleString(),
+              fireDetected: false,
+              temperature: latestSensorData?.temperature,
+              humidity: latestSensorData?.humidity,
+              gas: latestSensorData?.gas
+            };
+
+            await db.collection('fire_detection').add({ fireRecord: noFireRecord });
+
             return sendOnce(() => res.status(200).json({
               fire: false,
               imageUrl,
