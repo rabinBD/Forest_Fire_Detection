@@ -1,5 +1,7 @@
 
 import React, { useEffect, useState } from "react";
+import { getAuth, signInWithCustomToken } from "firebase/auth";
+
 
 const Settings = () => {
   const [isSuppressed, setIsSuppressed] = useState(false);
@@ -12,6 +14,22 @@ const Settings = () => {
   const [deleteType, setDeleteType] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
+
+  useEffect(() => {
+  const initializeAuth = async () => {
+    const auth = getAuth();
+    const customToken = localStorage.getItem('firebaseCustomToken'); 
+    if (customToken) {
+      try {
+        await signInWithCustomToken(auth, customToken);
+        console.log("Successfully signed in with custom token.");
+      } catch (error) {
+        console.error("Custom token sign-in failed:", error);
+      }
+    }
+  };
+  initializeAuth();
+}, []);
 
   useEffect(() => {
     const fetchSuppression = async () => {
@@ -88,7 +106,7 @@ const Settings = () => {
         )}
       </div>
 
-   
+
 
       {/* Modern Suppression Logs Card (Admin Only) */}
       <div style={{
@@ -119,11 +137,42 @@ const Settings = () => {
             }}
             onClick={async () => {
               if (!window.confirm('Delete ALL suppression logs? This cannot be undone.')) return;
+
               setDeleteLoading(true);
               setDeleteMessage("");
-              const res = await fetch('http://localhost:8080/api/admin/delete-logs', { method: 'DELETE' });
-              const result = await res.json();
-              setDeleteMessage(result.success ? 'All suppression logs deleted.' : result.message || 'Delete failed.');
+
+              try {
+                const user = getAuth().currentUser;
+                console.log("current user:", user);
+                if (!user) {
+                  setDeleteMessage("User not logged in.");
+                  setDeleteLoading(false);
+                  return;
+                }
+
+
+                const token = await user.getIdToken();
+
+                const res = await fetch('http://localhost:8080/api/admin/delete-logs', {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+
+                if (!res.ok) {
+                  const errorData = await res.json();
+                  console.error("Backend returned error:", errorData);
+                  throw new Error(errorData.message || "Delete failed");
+                }
+                const result = await res.json();
+                setDeleteMessage(result.success ? 'All suppression logs deleted.' : result.message || 'Delete failed.');
+              } catch (err) {
+                console.error("Delete error:", err);
+                setDeleteMessage("Delete request failed." +err.message);
+              }
+
               setDeleteLoading(false);
               fetchLogs(1);
               setLogPage(1);
