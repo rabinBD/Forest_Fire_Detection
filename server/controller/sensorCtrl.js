@@ -275,6 +275,17 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
             }));
           } else if (result === 'nofire') {
             console.log('No fire detected.');
+
+            const noFireRecord = {
+              imageUrl,
+              timestamp: new Date().toLocaleString(),
+              fireDetected: false,
+              temperature: latestSensorData?.temperature,
+              humidity: latestSensorData?.humidity,
+              gas: latestSensorData?.gas
+            };
+
+            await db.collection('fire_detection').add({ fireRecord: noFireRecord });
             return sendOnce(() => res.status(200).json({
               fire: false,
               imageUrl,
@@ -305,9 +316,11 @@ const getSensorHistory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
-
+    console.log("phase1 ");
+    
     // Use cached total count if not expired
     let total = sensorHistoryCountCache.value;
+    console.log("phase2 ");
     const now = Date.now();
     if (now - sensorHistoryCountCache.lastFetch > 60000) {
       // Only fetch count every 60s
@@ -316,9 +329,11 @@ const getSensorHistory = async (req, res) => {
       sensorHistoryCountCache = { value: total, lastFetch: now };
     }
     const totalPages = Math.ceil(total / limit);
-
+    
+    console.log("phase3 ");
     // Efficient pagination: use orderBy and startAfter only if offset > 0
     let query = db.collection('fire_readings_new').orderBy('timestamp', 'desc');
+    console.log("phase4 ");
     if (offset > 0) {
       // Get the last doc of the previous page
       const prevPageSnap = await query.limit(offset).get();
@@ -327,8 +342,11 @@ const getSensorHistory = async (req, res) => {
         query = query.startAfter(lastDoc);
       }
     }
+    console.log("phase5 ");
     const snapshot = await query.limit(limit).get();
+    console.log("phase6 ");
     const history = snapshot.docs.map(doc => doc.data());
+    console.log("phase7 ");
 
     return res.status(200).json({
       success: true,
