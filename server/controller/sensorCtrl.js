@@ -150,14 +150,9 @@ let latestSensorData = null;
 
 const handleSensorDataAndImage = async (req, res, broadcast) => {
   try {
-    // const dateKey = getDateKey();
-    // const sensorCollection = `fire_readings_${dateKey}`;
-    // const detectionCollection = `fire_detections_${dateKey}`;
-
     const contentType = req.headers['content-type'] || '';
 
     if (contentType.includes('application/json')) {
-      // JSON sensor data
       const temperature = req.body.temperature ? parseFloat(req.body.temperature) : null;
       const humidity = req.body.humidity ? parseFloat(req.body.humidity) : null;
       const gas = req.body.gas ? parseFloat(req.body.gas) : null;
@@ -175,12 +170,12 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
 
       if (temperature || humidity || gas) {
         await db.collection('fire_readings_new').add(sensorData);
-        // await db.collection(sensorCollection).add(sensorData);
 
         broadcast({
           type: 'sensor_update',
           data: sensorData
         });
+
         console.log('Sensor Data:', sensorData);
       }
 
@@ -191,24 +186,7 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
         return res.status(400).json({ error: 'No image data found in request' });
       }
 
-      // Save to temp file for prediction and upload
       const tempFilePath = path.join(os.tmpdir(), `image_${Date.now()}.jpg`);
-      fs.writeFileSync(tempFilePath, req.body);
-      console.log('Image temporarily saved for processing', tempFilePath);
-
-      // Upload to Cloudinary
-      const uploadResult = await cloudinary.uploader.upload(tempFilePath, {
-        folder: 'fireDetection',
-        resource_type: 'image',
-      });
-      const imageUrl = uploadResult.secure_url;
-
-      // Run prediction
-      const pythonProcess = spawn('python', [
-        'D:\\fireDetectionBackend\\server\\model\\predict.py',
-        tempFilePath,
-      ]);
-
       let result = null;
       let errorMessage = null;
       let responseSent = false;
@@ -219,90 +197,103 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
         }
       };
 
-      pythonProcess.stdout.on('data', (data) => {
-        result = data.toString().trim();
-      });
+      try {
+        fs.writeFileSync(tempFilePath, req.body);
+        console.log('Image temporarily saved:', tempFilePath);
 
-      pythonProcess.stderr.on('data', (data) => {
-        errorMessage = data.toString();
-        console.error('Python Error:', errorMessage);
-      });
+        const uploadResult = await cloudinary.uploader.upload(tempFilePath, {
+          folder: 'fireDetection',
+          resource_type: 'image',
+        });
+        const imageUrl = uploadResult.secure_url;
 
-      pythonProcess.on('close', async () => {
-        // Remove temp file
-        fs.unlinkSync(tempFilePath);
+        const pythonProcess = spawn('python', [
+          'D:\\fireDetectionBackend\\server\\model\\predict.py',
+          tempFilePath,
+        ]);
 
-        if (errorMessage && (errorMessage.toLowerCase().includes('traceback') || errorMessage.toLowerCase().includes('error'))) {
-          return sendOnce(() => res.status(500).json({ error: 'Prediction script error' }));
-        }
+        pythonProcess.stdout.on('data', (data) => {
+          result = data.toString().trim();
+        });
 
-        if (result === 'fire') {
-          console.log('fire detected');
+        pythonProcess.stderr.on('data', (data) => {
+          errorMessage = data.toString();
+          console.error('Python Error:', errorMessage);
+        });
 
+        pythonProcess.on('close', async () => {
+          if (errorMessage?.toLowerCase().includes('traceback') || errorMessage?.toLowerCase().includes('error')) {
+            return sendOnce(() => res.status(500).json({ error: 'Prediction script error' }));
+          }
 
-          const fireRecord = {
-            imageUrl,
-            timestamp: new Date().toLocaleString(),
-            fireDetected: true,
-            temperature: latestSensorData?.temperature,
-            humidity: latestSensorData?.humidity,
-            gas: latestSensorData?.gas
-          };
+          if (result === 'fire') {
+            console.log('fire detected');
 
-          await db.collection('fire_detection').add({ fireRecord });
-          // await db.collection(detectionCollection).add({ fireRecord });
+            const fireRecord = {
+              imageUrl,
+              timestamp: new Date().toLocaleString(),
+              fireDetected: true,
+              temperature: latestSensorData?.temperature,
+              humidity: latestSensorData?.humidity,
+              gas: latestSensorData?.gas
+            };
 
-          // const isSuppressed = await checkLongSuppression();
-          // if (!isSuppressed) {
-          if(canSendNotification()){
-          const tokensSnapshot = await db.collection('admin_tokens').get();
-          tokensSnapshot.forEach(async (doc) => {
-            const token = doc.data().token;
-            try {
-              await admin.messaging().send({
-                notification: {
-                  title: 'Fire Alert',
-                  body: `Temp: ${fireRecord.temperature}°C, humidity: ${fireRecord.humidity}, gas: ${fireRecord.gas}`,
-                },
-                token,
+            await db.collection('fire_detection').add({ fireRecord });
+
+            const isSuppressed = await checkLongSuppression();
+
+            if (!isSuppressed && canSendNotification()) {
+              const tokensSnapshot = await db.collection('admin_tokens').get();
+              tokensSnapshot.forEach(async (doc) => {
+                const token = doc.data().token;
+                try {
+                  await admin.messaging().send({
+                    notification: {
+                      title: 'Fire Alert',
+                      body: `Temp: ${fireRecord.temperature}°C, humidity: ${fireRecord.humidity}, gas: ${fireRecord.gas}`,
+                    },
+                    token,
+                  });
+                } catch (err) {
+                  console.error("Notification error:", err.message);
+                }
               });
-            } catch (err) {
-              console.error("Notification error:", err.message);
+              console.log('Notifications sent to admins');
             }
+
+            if (!isSuppressed && canSendEmail()) {
+              await sendEmail(imageUrl, fireRecord.temperature, fireRecord.humidity, fireRecord.gas);
+              console.log('Email sent successfully');
+            }
+
+            return sendOnce(() => res.status(200).json({
+              fire: true,
+              imageUrl,
+              message: 'Fire detected! Email alert sent.',
+              ...latestSensorData
+            }));
+          } else if (result === 'nofire') {
+            console.log('No fire detected.');
+            return sendOnce(() => res.status(200).json({
+              fire: false,
+              imageUrl,
+              message: 'No fire detected in image.'
+            }));
+          } else {
+            return sendOnce(() => res.status(500).json({ error: 'Unexpected result from prediction script' }));
+          }
+        });
+      } catch (err) {
+        console.error('Error processing image:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      } finally {
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlink(tempFilePath, (err) => {
+            if (err) console.error('Failed to delete temp file:', err);
+            else console.log('Temp file deleted:', tempFilePath);
           });
-          console.log('Notifications sent to admins');
-        } else{
-          console.log('Notifications paused due to cooldown');
         }
-
-        if(canSendEmail()){ 
-          await sendEmail(imageUrl, fireRecord.temperature, fireRecord.humidity, fireRecord.gas);
-          console.log('Email sent successfully');
-      }else{
-        console.log('Email not sent due to cooldown');
       }
-          return sendOnce(() => res.status(200).json({
-            fire: true,
-            imageUrl,
-            message: 'Fire detected! Email alert sent.',
-            ...latestSensorData
-          }));
-        // }else{
-        //     console.log('Suppression period active, no notifications sent');
-        //   }
-
-        } else if (result === 'nofire') {
-          console.log('No fire detected in image.');
-          return sendOnce(() => res.status(200).json({
-            fire: false,
-            imageUrl,
-            message: 'No fire detected in image.'
-          }));
-        } else {
-          return sendOnce(() => res.status(500).json({ error: 'Unexpected result from prediction script' }));
-        }
-      });
-
     } else {
       return res.status(400).json({ error: 'Unsupported content-type' });
     }
@@ -312,22 +303,45 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
   }
 };
 
-// Get sensor history
+
+// In-memory cache for total count (expires every 60s)
+let sensorHistoryCountCache = { value: 0, lastFetch: 0 };
 const getSensorHistory = async (req, res) => {
   try {
-    // Optional: parse limit and pagination from query params
-    // const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
 
-    const snapshot = await db.collection('fire_readings_new')
-      .orderBy('timestamp', 'desc')
-      .limit(10)
-      .get();
+    // Use cached total count if not expired
+    let total = sensorHistoryCountCache.value;
+    const now = Date.now();
+    if (now - sensorHistoryCountCache.lastFetch > 60000) {
+      // Only fetch count every 60s
+      const totalSnapshot = await db.collection('fire_readings_new').select().get();
+      total = totalSnapshot.size;
+      sensorHistoryCountCache = { value: total, lastFetch: now };
+    }
+    const totalPages = Math.ceil(total / limit);
 
+    // Efficient pagination: use orderBy and startAfter only if offset > 0
+    let query = db.collection('fire_readings_new').orderBy('timestamp', 'desc');
+    if (offset > 0) {
+      // Get the last doc of the previous page
+      const prevPageSnap = await query.limit(offset).get();
+      const lastDoc = prevPageSnap.docs[prevPageSnap.docs.length - 1];
+      if (lastDoc) {
+        query = query.startAfter(lastDoc);
+      }
+    }
+    const snapshot = await query.limit(limit).get();
     const history = snapshot.docs.map(doc => doc.data());
 
     return res.status(200).json({
       success: true,
       data: history,
+      total,
+      page,
+      totalPages
     });
   } catch (err) {
     console.error('Error fetching sensor history:', err);
@@ -347,19 +361,41 @@ const getSensorHistory = async (req, res) => {
 //   }
 // };
 
-// Get latest fire detection record
+// In-memory cache for fire detection count (expires every 60s)
+let fireDetectionCountCache = { value: 0, lastFetch: 0 };
 const getFireDetectionHistory = async (req, res) => {
   try {
-    const snapshot = await db.collection('fire_detection')
-      .orderBy('fireRecord.timestamp', 'desc')
-      .limit(10)
-      .get();
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
 
+    // Use cached total count if not expired
+    let total = fireDetectionCountCache.value;
+    const now = Date.now();
+    if (now - fireDetectionCountCache.lastFetch > 60000) {
+      const totalSnapshot = await db.collection('fire_detection').select().get();
+      total = totalSnapshot.size;
+      fireDetectionCountCache = { value: total, lastFetch: now };
+    }
+    const totalPages = Math.ceil(total / limit);
+
+    let query = db.collection('fire_detection').orderBy('fireRecord.timestamp', 'desc');
+    if (offset > 0) {
+      const prevPageSnap = await query.limit(offset).get();
+      const lastDoc = prevPageSnap.docs[prevPageSnap.docs.length - 1];
+      if (lastDoc) {
+        query = query.startAfter(lastDoc);
+      }
+    }
+    const snapshot = await query.limit(limit).get();
     const history = snapshot.docs.map(doc => doc.data().fireRecord || {});
 
     return res.status(200).json({
       success: true,
       data: history,
+      total,
+      page,
+      totalPages
     });
   } catch (err) {
     console.error('Error fetching fire detection history:', err);
@@ -422,6 +458,5 @@ module.exports = {
   webSocketFeed,
   handleSensorDataAndImage,
   getSensorHistory,
-  getFireDetectionHistory,
-  deleteHistoryByDate
-};
+  getFireDetectionHistory
+}
