@@ -3,14 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAnj42fEg9MKSrPYknsqbLEWcoXI3tbDC8",
-  authDomain: "esp32-firedetection.firebaseapp.com",
-  databaseURL: "https://esp32-firedetection-default-rtdb.firebaseio.com",
-  projectId: "esp32-firedetection",
-storageBucket: "esp32-firedetection.appspot.com",
-
-  messagingSenderId: "223272493437",
-  appId: "1:223272493437:web:8470b541af5b16b1c0ac14"
+  apiKey: "AIzaSyCdW8uDO8Uy27UwmKK49TS5riNnB1mOGT0",
+  authDomain: "fire-detection-ca65d.firebaseapp.com",
+  projectId: "fire-detection-ca65d",
+  storageBucket: "fire-detection-ca65d.firebasestorage.app",
+  messagingSenderId: "421747700938",
+  appId: "1:421747700938:web:cd92a2e2fa4b2edef5b033"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -24,7 +22,7 @@ export const onMessageListener = () => {
 }
 
 export const getFCMToken = async () => {
-  return await getToken(messaging, { vapidKey: "BKJFu867g3MA4O0WEqZMizCjdFNByM2QvpdplxbF0ISowlkD6AO4Ci9AyobiGQ85yvk3ZJx_lMFyFRp26Mk6jAI" });
+  return await getToken(messaging, { vapidKey: "BPROcKH3qUk7KCzSPLgLLjo8imMQIXm3SE44cx8WdOcsO5MgXNbwu68d-oA75fppCgf_F2mZCVI0285KdoV-0gI" });
 }
 
 export function requestPermission() {
