@@ -68,6 +68,138 @@ const bcrypt = require('bcryptjs')
 // }
 
 // Sign Up Controller for limited users
+// const signUpController = async (req, res) => {
+//     try {
+//         const { name, email, password, confirmPassword } = req.body;
+
+//         // Check all fields
+//         if (!name || !email || !password || !confirmPassword) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Please provide all required information',
+//             });
+//         }
+
+//         // Check password match
+//         if (password !== confirmPassword) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Passwords do not match',
+//             });
+//         }
+
+//         let existingUser;
+//         try {
+//             existingUser = await auth.getUserByEmail(email);
+//         } catch (err) {
+//             if (err.code !== 'auth/user-not-found') {
+//                 throw err; 
+//             }
+//         }
+
+//         if (existingUser) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Email is already registered',
+//             });
+//         }
+//         // Create user in Firebase Auth
+//         const userRecord = await auth.createUser({
+//             email,
+//             password,
+//             displayName: name,
+//             emailVerified: false,
+//         });
+
+//         // Save admin info to Firestore
+//         await db.collection('admins').doc(userRecord.uid).set({
+//             name,
+//             email,
+//             role: 'admin',
+//         });
+
+//         res.status(201).json({
+//             success: true,
+//             message: 'Admin account created successfully',
+//             uid: userRecord.uid,
+//         });
+
+//     } catch (error) {
+//         console.error('Signup error:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: error.message || 'Something went wrong',
+//         });
+//     }
+// }
+
+// Sign Up Controller for limited users
+// const signUpController = async (req, res) => {
+//     try {
+//         const { name, email, password, confirmPassword } = req.body;
+
+//         // Check all fields
+//         if (!name || !email || !password || !confirmPassword) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Please provide all required information',
+//             });
+//         }
+
+//         // Check password match
+//         if (password !== confirmPassword) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Passwords do not match',
+//             });
+//         }
+
+//         let existingUser;
+//         try {
+//             existingUser = await auth.getUserByEmail(email);
+//         } catch (err) {
+//             if (err.code !== 'auth/user-not-found') {
+//                 throw err; 
+//             }
+//         }
+
+//         if (existingUser) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Email is already registered',
+//             });
+//         }
+//         // Create user in Firebase Auth
+//         const userRecord = await auth.createUser({
+//             email,
+//             password,
+//             displayName: name,
+//             emailVerified: false,
+//         });
+
+//         // Save admin info to Firestore
+//         await db.collection('admins').doc(userRecord.uid).set({
+//             name,
+//             email,
+//             role: 'admin',
+//         });
+
+//         res.status(201).json({
+//             success: true,
+//             message: 'Admin account created successfully',
+//             uid: userRecord.uid,
+//         });
+
+//     } catch (error) {
+//         console.error('Signup error:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: error.message || 'Something went wrong',
+//         });
+//     }
+// }
+
+// Sign Up Controller for limited users
 const signUpController = async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
