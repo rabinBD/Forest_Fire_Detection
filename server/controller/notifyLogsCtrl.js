@@ -12,7 +12,7 @@ const getSuppressionLogs = async (req, res) => {
     const total = totalSnapshot.size;
     const totalPages = Math.ceil(total / limit);
 
-    // Get paginated data
+    const logs = [];
     let query = db.collection('suppression_logs').orderBy('timestamp', 'desc');
     if (offset > 0) {
       const offsetSnapshot = await query.limit(offset).get();
@@ -21,8 +21,9 @@ const getSuppressionLogs = async (req, res) => {
         query = query.startAfter(lastDoc);
       }
     }
+
     const snapshot = await query.limit(limit).get();
-    const logs = snapshot.docs.map(doc => doc.data());
+    snapshot.docs.forEach(doc => logs.push(doc.data()));
 
     return res.status(200).json({
       success: true,

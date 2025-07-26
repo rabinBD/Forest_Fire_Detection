@@ -1,4 +1,12 @@
 const { db } = require('../config/firebase');
+const rateLimit = require('express-rate-limit');
+
+// Rate limiting middleware
+const suppressionLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // Limit each IP to 10 requests per windowMs
+  message: 'Too many requests, please try again later.'
+});
 
 // Get current notification suppression status
 const getSuppressionStatus = async (req, res) => {
@@ -34,4 +42,7 @@ const setSuppressionStatus = async (req, res) => {
   }
 };
 
-module.exports = { getSuppressionStatus, setSuppressionStatus };
+module.exports = { 
+  getSuppressionStatus: [suppressionLimiter, getSuppressionStatus], 
+  setSuppressionStatus 
+};
