@@ -222,6 +222,7 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
         });
 
         pythonProcess.on('close', async () => {
+          fs.unlinkSync(tempFilePath);
           if (errorMessage?.toLowerCase().includes('traceback') || errorMessage?.toLowerCase().includes('error')) {
             return sendOnce(() => res.status(500).json({ error: 'Prediction script error' }));
           }
@@ -286,13 +287,6 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
       } catch (err) {
         console.error('Error processing image:', err);
         return res.status(500).json({ error: 'Internal Server Error' });
-      } finally {
-        if (fs.existsSync(tempFilePath)) {
-          fs.unlink(tempFilePath, (err) => {
-            if (err) console.error('Failed to delete temp file:', err);
-            else console.log('Temp file deleted:', tempFilePath);
-          });
-        }
       }
     } else {
       return res.status(400).json({ error: 'Unsupported content-type' });
