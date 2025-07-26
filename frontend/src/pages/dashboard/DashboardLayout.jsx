@@ -49,7 +49,10 @@ const DashboardLayout = () => {
         <Link to="settings" className="sidebar-link" onClick={closeSidebar}>
           <FaCog /> Settings
         </Link>
-        <Link to="/login" className="sidebar-link" onClick={closeSidebar}>
+        <Link to="/login" className="sidebar-link" onClick={() => { 
+          localStorage.removeItem('token'); 
+          closeSidebar(); 
+        }}>
           <FaSignOutAlt /> Logout
         </Link>
       </aside>

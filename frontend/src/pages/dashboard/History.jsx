@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import "../../styles/History.css";
 
@@ -66,9 +65,8 @@ function History() {
           <tr>
             <th>Time</th>
             <th>Temperature (°C)</th>
-            <th>Smoke</th>
-            <th>Flame</th>
-            <th>Status</th>
+            <th>Gas</th>
+            <th>Humidity (%)</th>
           </tr>
         </thead>
         <tbody>
@@ -76,11 +74,8 @@ function History() {
             <tr key={idx}>
               <td>{entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "N/A"}</td>
               <td>{entry.temperature ?? "N/A"}</td>
-              <td>{entry.smoke ?? "N/A"}</td>
-              <td>{entry.flame ? "Yes" : "No"}</td>
-              <td style={{ color: entry.fireDetected ? "red" : "green" }}>
-                {entry.fireDetected ? "🔥 Fire Detected" : "✅ Normal"}
-              </td>
+              <td>{entry.gas ?? "N/A"}</td>
+              <td>{entry.humidity ?? "N/A"}</td>
             </tr>
           ))}
         </tbody>
@@ -92,6 +87,8 @@ function History() {
           </div>
         </>
       )}
+
+      <div style={{ margin: '20px 0' }}></div>
 
       <h2> Fire Detection Events <button style={{marginLeft:8}} onClick={fetchFireHistory}>Refresh</button></h2>
       {loading ? (
@@ -105,7 +102,7 @@ function History() {
           <tr>
             <th>Time</th>
             <th>Image</th>
-            <th>Location</th>
+            <th>Confidence</th>
           </tr>
         </thead>
         <tbody>
@@ -117,7 +114,9 @@ function History() {
                   <img src={entry.imageUrl} alt="Fire Event" style={{ width: 150, borderRadius: 4 }} />
                 ) : "N/A"}
               </td>
-              <td>{`Location ${idx % 2 === 0 ? 1 : 2}`}</td>
+              <td style={{ color: entry.fireDetected ? "red" : "green" }}>
+                {entry.fireDetected ? "Fire" : "No Fire"}
+              </td>
             </tr>
           ))}
         </tbody>

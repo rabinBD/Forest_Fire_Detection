@@ -45,7 +45,7 @@ const Dashboard2 = () => {
 
     // WebSocket connection to receive real-time sensor data
     const socket = new WebSocket(
-      "https://d8bd8ca2aebd.ngrok-free.app/api/sensors/data"
+      "https://f6370b8ec803.ngrok-free.app/api/sensors/data"
     );
     //ws://localhost:8080
 
