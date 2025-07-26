@@ -12,11 +12,13 @@ import {
 import LeafletMap from "../../components/LeafletMap";
 import defaultForestImage from "../../assets/dashboard-forest.png";
 import defaultMapImage from "../../assets/map.png";
-import fireImage from "../../assets/fire.png"; // 🔥 Add fire image to your assets folder
+import fireImage from "../../assets/fire.png"; // Add fire image to your assets folder
+
 
 const Dashboard2 = () => {
   const [mapImage, setMapImage] = useState("");
   const [forestImage, setForestImage] = useState("");
+  const [fireEventImage, setFireEventImage] = useState("");
   const [temperature, setTemperature] = useState(null);
   const [humidity, setHumidity] = useState(null);
   const [gas, setGas] = useState(null);
@@ -24,6 +26,10 @@ const Dashboard2 = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [showFireImage, setShowFireImage] = useState(false); // 👈 control fire image
   const [flame, setFlame] = useState(null);
+
+  // AlertSilencer state
+  const [isSuppressed, setIsSuppressed] = useState(false);
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   useEffect(() => {
     // Load static images
@@ -54,31 +60,63 @@ const Dashboard2 = () => {
           setGas(gas);
           setFlame(flame);
 
-          const fireDetected = gas > 100 || temperature > 50 || flame === true;
+          const fireDetected = gas > 100 || temperature > 40 || flame === true;
           setFireStatus(fireDetected ? "🔥 Fire Detected!" : "✅ Normal");
           setShowPopup(fireDetected);
-          setShowFireImage(fireDetected); // 👈 show fire image when fire detected
+          setShowFireImage(fireDetected);
+
+          // If fire detected, fetch latest fire event image
+          if (fireDetected) {
+            fetch('http://localhost:8080/api/sensors/getDetectData?limit=1&page=1')
+              .then(res => res.json())
+              .then(data => {
+                if (data.success && data.data && data.data[0]?.imageUrl) {
+                  setFireEventImage(data.data[0].imageUrl);
+                } else {
+                  setFireEventImage("");
+                }
+              })
+              .catch(() => setFireEventImage(""));
+          } else {
+            setFireEventImage("");
+          }
         }
       } catch (err) {
         console.error("WebSocket message error:", err);
       }
     };
 
+    // Fetch notification suppression status from backend API
+    const fetchSuppression = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/notify/suppression');
+        const data = await res.json();
+        setIsSuppressed(!!data.longSuppression);
+      } catch (err) {
+        setIsSuppressed(false);
+      }
+    };
+    fetchSuppression();
+
     return () => socket.close();
   }, []);
 
+
+
   return (
     <section className="dashboard-container" id="dashboard-view">
-      {/* 🔥 Fire Alert Popup */}
+      {/*  Fire Alert Popup */}
       {showPopup && (
         <div className="popup-overlay">
           <div className="popup">
-            <h2>🚨 Fire Detected!</h2>
+            <h2>Fire Detected!</h2>
             <p>Temperature and smoke levels are above normal.</p>
             <button onClick={() => setShowPopup(false)}>Close</button>
           </div>
         </div>
       )}
+
+   
 
       <main className="main-content" id="dashboard">
         <h2 className="dashboard-title">Dashboard</h2>
@@ -87,25 +125,14 @@ const Dashboard2 = () => {
           <div className="status-card">
             <h3>Status</h3>
             <img
-              src={forestImage || defaultForestImage}
-              alt="Forest Status"
+              src={showFireImage && fireEventImage ? fireEventImage : (forestImage || defaultForestImage)}
+              alt={showFireImage && fireEventImage ? "Fire Event" : "Forest Status"}
               className="status-image"
+              style={{ border: showFireImage ? "2px solid red" : "none" }}
             />
-            <p>{fireStatus || "Status unavailable"}</p>
-
-            {/* 🔥 Fire Image Display */}
-            {showFireImage && (
-              <img
-                src={fireImage}
-                alt="Fire Detected"
-                className="fire-image"
-                style={{
-                  marginTop: "10px",
-                  width: "100%",
-                  borderRadius: "8px",
-                }}
-              />
-            )}
+            <p style={{ color: showFireImage ? "red" : "green", fontWeight: "bold" }}>
+              {showFireImage ? "🔥 Fire Detected!" : "✅ Normal"}
+            </p>
           </div>
 
           <div className="map-container">
