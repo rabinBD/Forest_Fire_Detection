@@ -1,6 +1,7 @@
 //to pause notifications and emails for a certain period of time
 let lastNotificationTime = null;
 let lastEmailTime = null;
+const {db} = require('../config/firebase');
 
 const EMAIL_COOLDOWN_MIN = 5;
 const NOTIFICATION_COOLDOWN_MIN = 1;
