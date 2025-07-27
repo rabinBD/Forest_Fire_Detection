@@ -57,7 +57,7 @@ function History() {
 
   return (
     <section className="history-section" id="history">
-      <h2>
+      <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>
         Sensor History{" "}
         <button
           style={{
@@ -65,12 +65,22 @@ function History() {
             backgroundColor: "#4CAF50",
             color: "white",
             border: "none",
-            padding: "8px 12px",
+            padding: "3px 7px",
             borderRadius: "4px",
             cursor: "pointer",
             boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            transition: "background-color 0.3s ease",
           }}
-          onClick={fetchSensorHistory}
+          onClick={() => {
+            fetchSensorHistory();
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerText = 'Sensor history refreshed!';
+            document.body.appendChild(notification);
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 3000);
+          }}
         >
           Refresh
         </button>
@@ -91,14 +101,17 @@ function History() {
           </tr>
         </thead>
         <tbody>
-          {[...sensorHistory].slice(0, 10).reverse().map((entry, idx) => (
-            <tr key={idx}>
-              <td>{entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "N/A"}</td>
-              <td>{entry.temperature ?? "N/A"}</td>
-              <td>{entry.gas ?? "N/A"}</td>
-              <td>{entry.humidity ?? "N/A"}</td>
-            </tr>
-          ))}
+          {[...sensorHistory]
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 10)
+            .map((entry, idx) => (
+              <tr key={idx}>
+                <td>{entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "N/A"}</td>
+                <td>{entry.temperature ?? "N/A"}</td>
+                <td>{entry.gas ?? "N/A"}</td>
+                <td>{entry.humidity ?? "N/A"}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
           <div className="pagination">
@@ -123,7 +136,34 @@ function History() {
 
       <div style={{ margin: '20px 0' }}></div>
 
-      <h2> Fire Detection Events <button style={{marginLeft:8}} onClick={fetchFireHistory}>Refresh</button></h2>
+      <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>
+        Fire Detection Events 
+        <button
+          style={{
+             marginLeft: 8,
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            cursor: "pointer",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            transition: "background-color 0.3s ease",
+          }}
+          onClick={() => {
+            fetchFireHistory();
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerText = 'Fire detection events refreshed!';
+            document.body.appendChild(notification);
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 3000);
+          }}
+        >
+          Refresh
+        </button>
+      </h2>
       {loading ? (
         <p>Loading...</p>
       ) : fireHistory.length === 0 ? (
@@ -139,19 +179,22 @@ function History() {
           </tr>
         </thead>
         <tbody>
-          {[...fireHistory].slice(0, 5).reverse().map((entry, idx) => (
-            <tr key={idx}>
-              <td>{entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "N/A"}</td>
-              <td>
-                {entry.imageUrl ? (
-                  <img src={entry.imageUrl} alt="Fire Event" style={{ width: 150, borderRadius: 4 }} />
-                ) : "N/A"}
-              </td>
-              <td style={{ color: entry.fireDetected ? "red" : "green" }}>
-                {entry.fireDetected ? "Fire" : "No Fire"}
-              </td>
-            </tr>
-          ))}
+          {[...fireHistory]
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 5)
+            .map((entry, idx) => (
+              <tr key={idx}>
+                <td>{entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "N/A"}</td>
+                <td>
+                  {entry.imageUrl ? (
+                    <img src={entry.imageUrl} alt="Fire Event" style={{ width: 150, borderRadius: 4 }} />
+                  ) : "N/A"}
+                </td>
+                <td style={{ color: entry.fireDetected ? "red" : "green" }}>
+                  {entry.fireDetected ? "Fire" : "No Fire"}
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
           <div className="pagination">
@@ -178,3 +221,4 @@ function History() {
 }
 
 export default History;
+

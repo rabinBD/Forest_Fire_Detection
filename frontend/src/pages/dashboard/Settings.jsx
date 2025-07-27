@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { getAuth, signInWithCustomToken } from "firebase/auth";
 
@@ -89,19 +88,56 @@ const Settings = () => {
 
   return (
     <section id="settings">
-      <h2>Settings</h2>
+    
       <div style={{ margin: '20px 0', padding: '10px', background: '#f5f5f5', borderRadius: '8px', maxWidth: 400 }}>
         <p>
           Notifications are currently: <strong>{isSuppressed ? 'Paused for 24 hours' : 'Active'}</strong>
         </p>
         {!isSuppressed && (
-          <button onClick={toggleSuppression} style={{ padding: '10px', marginTop: '10px' }}>
-            Pause Notifications for 1 Day
+          <button
+            style={{
+              padding: '10px',
+              marginTop: '10px',
+              backgroundColor: '#176a3a',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              transition: 'background-color 0.3s ease',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              width: '200px',
+              height: '50px',
+            }}
+            onClick={toggleSuppression}
+          >
+            Pause Notifications
           </button>
         )}
         {isSuppressed && (
-          <button onClick={resumeNotifications} style={{ padding: '10px', marginTop: '10px' }} disabled={resumeLoading}>
-            {resumeLoading ? 'Resuming...' : 'Resume Notifications Now'}
+          <button
+            style={{
+              padding: '10px',
+              marginTop: '10px',
+              backgroundColor: '#176a3a',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              transition: 'background-color 0.3s ease',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              width: '200px',
+              height: '50px',
+            }}
+            onClick={resumeNotifications}
+            disabled={resumeLoading}
+          >
+            {resumeLoading ? 'Resuming...' : 'Resume Notifications'}
           </button>
         )}
       </div>
@@ -116,14 +152,14 @@ const Settings = () => {
         borderRadius: 16,
         maxWidth: 800,
         boxShadow: '0 4px 16px rgba(0,0,0,0.07)',
-        border: '1px solid #b7e4c7',
+        border: '1px solid #b7e4c7ff',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
           <h3 style={{ color: '#176a3a', fontWeight: 700, fontSize: 24, margin: 0 }}>Suppression Logs <span style={{ fontSize: 16, fontWeight: 400, color: '#176a3a' }}>(Admin Only)</span></h3>
           <button
             disabled={deleteLoading}
             style={{
-              background: '#176a3a',
+              background: 'rgba(23, 106, 58, 1)',
               color: '#fff',
               border: 'none',
               borderRadius: 6,
