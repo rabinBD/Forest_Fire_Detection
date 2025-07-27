@@ -182,7 +182,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  font-size: 50px;
+  /* font-size: 50px; */
 }
 
 .sensor-card {
@@ -205,6 +205,8 @@ body {
 .sensor-card h4 {
   text-align: center;
   font-size: 14px;
+  align-self: flex-start;
+  margin-left: 1.5rem;
   color: rgb(61, 60, 60);
   font-weight: 600;
 }
@@ -215,8 +217,8 @@ body {
   /* box-shadow: rgba(139, 139, 152, 0.2) 0px 7px 29px 0px; */
   width: 100px;
   height: 100px;
-  border: 6px solid #f3f3f3;
-  border-radius: 50%;
+  /* border: 6px solid #f3f3f3;
+  border-radius: 50%; */
   color: #006400;
   font-size: 24px;
   font-weight: bold;
@@ -256,6 +258,7 @@ body {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
@@ -274,16 +277,27 @@ body {
   font-size: 1.2rem;
   font-weight: bold;
   z-index: 9999;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
   animation: fadeInOut 5s ease-in-out;
   text-align: center;
 }
 
 @keyframes fadeInOut {
-  0% { opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 .fire-image-container {
@@ -301,8 +315,66 @@ body {
   border-radius: 10px;
 }
 
+/* General responsive improvements */
 
+/* Ensure cards are stacked on smaller screens */
+@media (max-width: 767px) {
+  .cards-container {
+    flex-direction: column;
+    gap: 16px;
+  }
 
+  .sensor-card {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+}
+
+/* Adjust map and status card layout for smaller screens */
+@media (max-width: 767px) {
+  .top-section {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .status-card,
+  .map-container {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+}
+
+/* Improve popup scaling for smaller screens */
+/* .center-toast-popup {
+  max-width: 90%;
+  font-size: 1rem;
+  padding: 16px 20px;
+} */
+
+/* Ensure table responsiveness */
+.history-table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.history-table th,
+.history-table td {
+  font-size: 0.9rem;
+  padding: 0.4rem;
+}
+
+/* Adjust pagination for smaller screens */
+.pagination {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
 
 /* Responsive Layouts */
 @media (min-width: 768px) {
@@ -427,7 +499,7 @@ body {
 
 
 .center-toast-popup {
-  position: ;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
