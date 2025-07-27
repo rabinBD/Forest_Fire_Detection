@@ -156,14 +156,14 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
       const temperature = req.body.temperature ? parseFloat(req.body.temperature) : null;
       const humidity = req.body.humidity ? parseFloat(req.body.humidity) : null;
       const gas = req.body.gas ? parseFloat(req.body.gas) : null;
-      const flameDetected = req.body.flame && req.body.flame.toLowerCase() === 'detected';
+      const flame = req.body.flame ;
 
       const sensorData = {
         temperature,
         humidity,
         gas,
-        flameDetected,
-        timestamp: new Date().toLocaleString(),
+        flame,
+        timestamp: new Date().toISOString(), // Use ISO format for consistency
       };
 
       latestSensorData = sensorData;
@@ -232,7 +232,7 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
 
             const fireRecord = {
               imageUrl,
-              timestamp: new Date().toLocaleString(),
+              timestamp: new Date().toISOString(),
               fireDetected: true,
               temperature: latestSensorData?.temperature,
               humidity: latestSensorData?.humidity,
@@ -278,7 +278,7 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
 
             const noFireRecord = {
               imageUrl,
-              timestamp: new Date().toLocaleString(),
+              timestamp: new Date().toISOString(),
               fireDetected: false,
               temperature: latestSensorData?.temperature,
               humidity: latestSensorData?.humidity,

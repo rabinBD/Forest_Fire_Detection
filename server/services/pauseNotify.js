@@ -3,8 +3,8 @@ let lastNotificationTime = null;
 let lastEmailTime = null;
 const {db} = require('../config/firebase');
 
-const EMAIL_COOLDOWN_MIN = 5;
-const NOTIFICATION_COOLDOWN_MIN = 1;
+const EMAIL_COOLDOWN_MIN = 0.5
+const NOTIFICATION_COOLDOWN_MIN = 0.5;
 
 const canSendEmail = () =>{
   const now = Date.now();
@@ -36,7 +36,7 @@ const checkLongSuppression = async () =>{
 
     const suppressedAt = new Date(settingsData.suppressedAt).getTime()
     const now = Date.now();
-    const duration = (settingsData.suppressionDurationHours || 24)* 60 * 60 * 1000; 
+    const duration = (settingsData.suppressionDurationHours || 5)* 60 * 1000; 
 
     if((now - suppressedAt) >= duration) {
         await db.collection('settings').doc('notification_control').update({
