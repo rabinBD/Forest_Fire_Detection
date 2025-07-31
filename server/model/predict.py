@@ -58,7 +58,7 @@ def predict_fire(image_path):
         sys.exit(1)
 
     prediction = model.predict(features, verbose=0)[0][0]
-    return "fire" if prediction > 0.5 else "nofire"
+    return "fire" if prediction > 0.4 else "nofire"
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
