@@ -9,7 +9,7 @@ const cloudinary = require('../config/cloudinary');
 const { canSendNotification, canSendEmail, checkLongSuppression } = require('../services/pauseNotify');
 require('dotenv').config();
 
-// Centralized ngrok URL 
+// Centralized ngrok URL ----->Testing
 const NGROK_URL = process.env.NGROK_URL;
 
 // Handle receiving new sensor data  ----->Testing
@@ -140,12 +140,6 @@ const getStatus = async (req, res) => {
 };
 
 
-// ------> date key function to create collection names based on date and CLOUDINARY SETUP <------
-// const getDateKey = () => {
-//   const now = new Date();
-//   return now.toISOString().split('T')[0].replace(/-/g, '_'); // YYYY_MM_DD
-// };
-
 let latestSensorData = null;
 
 const handleSensorDataAndImage = async (req, res, broadcast) => {
@@ -156,7 +150,7 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
       const temperature = req.body.temperature ? parseFloat(req.body.temperature) : null;
       const humidity = req.body.humidity ? parseFloat(req.body.humidity) : null;
       const gas = req.body.gas ? parseFloat(req.body.gas) : null;
-      const flame = req.body.flame ;
+      const flame = req.body.flame ? req.body.flame.toLowerCase() === 'detected' : null;
 
       const sensorData = {
         temperature,
@@ -168,7 +162,7 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
 
       latestSensorData = sensorData;
 
-      if (temperature || humidity || gas ) {
+      if (temperature || humidity || gas) {
         await db.collection('fire_readings_new').add(sensorData);
 
         broadcast({
@@ -257,6 +251,10 @@ const handleSensorDataAndImage = async (req, res, broadcast) => {
                   });
                 } catch (err) {
                   console.error("Notification error:", err.message);
+                  if (err.message.includes("Requested entity was not found")) {
+                    await db.collection('admin_tokens').doc(doc.id).delete();
+                    console.log(`Deleted invalid token for user ${doc.id}`);
+                  }
                 }
               });
               console.log('Notifications sent to admins');
@@ -355,18 +353,6 @@ const getSensorHistory = async (req, res) => {
   }
 };
 
-// const getSensorHistory = async (req, res) => {
-//   try {
-//     const date = req.query.date || getDateKey();
-//     const snapshot = await db.collection(`fire_readings_${date}`).orderBy('timestamp', 'desc').get();
-//     const history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-//     res.status(200).json({ success: true, data: history });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: 'Failed to fetch sensor history' });
-//   }
-// };
-
 // In-memory cache for fire detection count (expires every 60s)
 let fireDetectionCountCache = { value: 0, lastFetch: 0 };
 const getFireDetectionHistory = async (req, res) => {
@@ -409,51 +395,6 @@ const getFireDetectionHistory = async (req, res) => {
   }
 };
 
-// const getFireDetectionHistory = async (req, res) => {
-//   try {
-//     const date = req.query.date || getDateKey();
-//     const snapshot = await db.collection(`fire_detections_${date}`).orderBy('fireRecord.timestamp', 'desc').get();
-//     const history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data().fireRecord }));
-//     res.status(200).json({ success: true, data: history });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: 'Failed to fetch fire detection history' });
-//   }
-// };
-
-
-//delete by admin
-// const deleteHistoryByDate = async (req, res) => {
-//   try {
-//     const { date } = req.params;
-
-//     //checking for admin role
-//     const userDoc = await db.collection('users').doc(req.user.uid).get();
-//     if (!userDoc.exists || userDoc.data().role !== 'admin') {
-//       return res.status(403).json({
-//         message: 'Forbidden: Admin only'
-//       });
-//     }
-
-//     const collectionsToDelete = [`fire_readings_${date}`, `fire_detections_${date}`];
-
-//     for (const collectionName of collectionsToDelete) {
-//       const snapshot = await db.collection(collectionName).get();
-//       const batch = db.batch();
-
-//       snapshot.docs.forEach((doc) => {
-//         batch.delete(doc.ref);
-//       });
-
-//       await batch.commit();
-//     }
-
-//     res.status(200).json({ success: true, message: `History for ${date} deleted.` });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: 'Failed to delete data for date' });
-//   }
-// };
 
 // Export all functions
 module.exports = {
