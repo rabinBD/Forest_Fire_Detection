@@ -13,7 +13,7 @@ const notifySuppression = require('./routes/notifySuppressionRoute');
 const notifySuppressionLogs = require('./routes/notifyLogsRoute');
 const adminRoute = require('./routes/adminRoute'); 
 // Start auto-cleanup job
-require('./services/autoCleanup');
+// require('./services/autoCleanup');
 
 
 const app = express();
@@ -24,7 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(cors({
-    origin: 'http://localhost:5173', // Frontend URL
+    origin: process.env.origin, // Frontend URL
     credentials: true
 }));
 app.use('/images', express.static(path.join(__dirname, 'uploadIMG')));
