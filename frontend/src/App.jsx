@@ -1,10 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useState } from "react";
 import { useEffect } from "react";
-import { onMessageListener, messaging } from "../services/firebase";
-// import "./App.css";
+import { setupFCMListener } from "../services/firebase";
 import LandingPage from "./pages/landing/LandingPage";
-import Dashboard2 from "./pages/dashboard/Dashboard2"; // updated dashboard
+import Dashboard2 from "./pages/dashboard/Dashboard2";
 import Signup from "./pages/auth/Signup";
 import Login from "./pages/auth/Login";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
@@ -15,13 +13,12 @@ import Settings from "./pages/dashboard/Settings";
 
 function App() {
   useEffect(() => {
-    const unsubscribe = onMessageListener();
-    console.log("unsubscribe: ", unsubscribe);
-
-    return () => {
-      unsubscribe();
-    };
-  }, [messaging]);
+    setupFCMListener((notification) => {
+      // Dispatch event globally
+      const event = new CustomEvent("fire-alert", { detail: notification });
+      window.dispatchEvent(event);
+    });
+  }, []);
 
   return (
     <Router>
