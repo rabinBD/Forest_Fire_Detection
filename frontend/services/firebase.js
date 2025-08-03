@@ -3,12 +3,13 @@ import { getAuth } from "firebase/auth";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCdW8uDO8Uy27UwmKK49TS5riNnB1mOGT0",
-  authDomain: "fire-detection-ca65d.firebaseapp.com",
-  projectId: "fire-detection-ca65d",
-  storageBucket: "fire-detection-ca65d.firebasestorage.app",
-  messagingSenderId: "421747700938",
-  appId: "1:421747700938:web:cd92a2e2fa4b2edef5b033"
+  apiKey: import.meta.env.VITE_apiKey,
+  authDomain: import.meta.env.VITE_VITE_authDomain,
+  databaseURL: import.meta.env.VITE_databaseURL,
+  projectId: import.meta.env.VITE_projectId,
+  storageBucket: import.meta.env.VITE_storageBucket,
+  messagingSenderId: import.meta.env.VITE_messagingSenderId,
+  appId: import.meta.env.VITE_appId,
 };
 
 const app = initializeApp(firebaseConfig);
@@ -22,7 +23,7 @@ export const onMessageListener = () => {
 }
 
 export const getFCMToken = async () => {
-  return await getToken(messaging, { vapidKey: "BPROcKH3qUk7KCzSPLgLLjo8imMQIXm3SE44cx8WdOcsO5MgXNbwu68d-oA75fppCgf_F2mZCVI0285KdoV-0gI" });
+  return await getToken(messaging, { vapidKey: import.meta.env.VITE_vapidKey });
 }
 
 export function requestPermission() {
@@ -37,4 +38,12 @@ export function requestPermission() {
       console.warn('Permission denied')
     }
   }).catch(err => console.error(err));
+};
+
+// Real-time foreground FCM listener
+export const setupFCMListener = (cb) => {
+  onMessage(messaging, (payload) => {
+    console.log("FCM foreground message:", payload);
+    cb(payload.notification);
+  });
 };
