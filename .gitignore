@@ -51,3 +51,7 @@ myenv/
 /Dataset/processed_data/X_val.npy
 /Dataset/processed_data/y_train.npy
 /Dataset/processed_data/y_val.npy
+
+.venv/
+server/model.h5
+server/uploadIMG
