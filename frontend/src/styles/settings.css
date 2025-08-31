@@ -1,0 +1,97 @@
+
+#settings {
+  padding: 32px 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  max-width: 700px;
+  margin: 32px auto;
+}
+
+#settings h2 {
+  font-size: 2rem;
+  margin-bottom: 18px;
+  color: #2c3e50;
+}
+
+#settings h3 {
+  margin-top: 32px;
+  font-size: 1.2rem;
+  color: #34495e;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.history-table th, .history-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #eaeaea;
+  text-align: left;
+}
+
+.history-table th {
+  background: #f0f4f8;
+  color: #333;
+  font-weight: 600;
+}
+
+.history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 0 0;
+}
+
+.pagination button {
+  background: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pagination button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 1rem;
+  color: #555;
+}
+
+#settings .suppression-status {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+#settings button {
+  background: #e67e22;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#settings button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}

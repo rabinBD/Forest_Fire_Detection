@@ -40,13 +40,18 @@ const Login = () => {
       localStorage.setItem("token", idToken);
       console.log("ID Token saved to localStorage");
 
+      // Step 5: Save userEmail and userRole to localStorage
+      const { email, role } = res.data.user;
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userRole", role);
+
       requestPermission();
       const fcmToken = await getFCMToken();
 
       console.log('FCM token: ', fcmToken);
 
       if (fcmToken) {
-        // Step 5: Save FCM token to server (authenticated)
+        // Step 6: Save FCM token to server (authenticated)
         await axios.post(
           "http://localhost:8080/api/notify/save-token",
           { token: fcmToken },
@@ -61,7 +66,7 @@ const Login = () => {
 
 
       alert("Login successful");
-      navigate("/dashboard");
+      navigate("/dashboard2");
     } catch (error) {
       console.error("Login error:", error);
       alert(error.response?.data?.message || "Login failed");

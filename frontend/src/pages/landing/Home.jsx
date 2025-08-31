@@ -17,7 +17,9 @@ function Home() {
             Powered by TinyML and smart sensors to protect nature,
             <br /> wildlife, and communities with real-time fire detection.
           </p>
-          <Button className="learn-more">Learn More</Button>
+          <a href="#about">
+            <Button className="learn-more">Learn More</Button>
+          </a>
         </div>
       </section>
     </>

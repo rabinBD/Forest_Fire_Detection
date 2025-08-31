@@ -1,144 +1,176 @@
-// Dashboard.jsx
-import React, { useEffect, useState, useRef } from "react";
-import "./Dashboard2.css";
-import { FaUserCircle } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import "../../styles/Dashboard2.css";
 import {
-  FaHistory,
-  FaCog,
-  FaEnvelope,
-  FaMicrochip,
-  FaThLarge,
+  FaTemperatureHigh, FaCloud, FaUserCircle, FaHistory, FaCog,
+  FaEnvelope, FaMicrochip, FaThLarge, FaShieldAlt
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
-
-// ✅ Import default images from assets folder
-import defaultMapImage from "../../assets/map.png";
-import defaultForestImage from "../../assets/dashboard-forest.png";
+import { WiHumidity } from "react-icons/wi";
+import { FaFireFlameCurved } from "react-icons/fa6";
+import LeafletMap from "../../components/LeafletMap";
+import { messaging, setupFCMListener } from "../../../services/firebase";
+import { onMessage } from "firebase/messaging";
 
 const Dashboard2 = () => {
-  const [mapImage, setMapImage] = useState("");
-  const [forestImage, setForestImage] = useState("");
-  const [statusText, setStatusText] = useState("");
-  const [temperatureData, setTemperatureData] = useState([]);
-  const [humidityData, setHumidityData] = useState([]);
-  const [gasData, setGasData] = useState([]);
+  const [temperature, setTemperature] = useState(null);
+  const [humidity, setHumidity] = useState(null);
+  const [gas, setGas] = useState(null);
+  const [flame, setFlame] = useState(null);
+  const [fireStatus, setFireStatus] = useState("Normal");
+  const [showPopup, setShowPopup] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [popupContent, setPopupContent] = useState("");
+
+
 
   useEffect(() => {
-    // ✅ Replace with your real API endpoints
-    fetch("/api/map-image")
-      .then((res) => res.json())
-      .then((data) => setMapImage(data.url))
-      .catch(() => setMapImage(defaultMapImage)); // fallback to local image
+    const handler = (e) => {
+      const { title, body } = e.detail || {};
+      setPopupContent(body || "Fire Alert!");
+      setShowPopup(true);
+      setFireStatus("Alert");
 
-    fetch("/api/forest-image")
-      .then((res) => res.json())
-      .then((data) => setForestImage(data.url))
-      .catch(() => setForestImage(defaultForestImage));
+      const timer = setTimeout(() => {
+        setShowPopup(false);
+        setFireStatus("Normal");
+      }, 15000);
 
-    fetch("/api/status")
-      .then((res) => res.json())
-      .then((data) => setStatusText(data.status))
-      .catch(() => setStatusText("Status unavailable"));
+      return () => clearTimeout(timer);
+    };
 
-    fetch("/api/sensor-data")
-      .then((res) => res.json())
-      .then((data) => {
-        setTemperatureData(data.temperature);
-        setHumidityData(data.humidity);
-        setGasData(data.gas);
-      })
-      .catch(() => {
-        setTemperatureData([]);
-        setHumidityData([]);
-        setGasData([]);
-      });
+    window.addEventListener("fire-alert", handler);
+    return () => window.removeEventListener("fire-alert", handler);
+  }, []);
+
+
+
+  // 🔌 WebSocket Sensor Data
+  useEffect(() => {
+    const socket = new WebSocket("https://0bbc2276ea11.ngrok-free.app/api/sensors/data");
+
+    socket.onopen = () => {
+      setTemperature(0);
+      setHumidity(0);
+      setGas(0);
+      setFlame(false);
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === "sensor_update") {
+          const { temperature, humidity, gas, flame } = message.data;
+          setTemperature(temperature);
+          setHumidity(humidity);
+          setGas(gas);
+          setFlame(flame);
+        }
+      } catch (err) {
+        console.error("WebSocket error:", err);
+      }
+    };
+
+    socket.onclose = () => {
+      console.warn("WebSocket disconnected. Attempting to reconnect...");
+      setTimeout(() => {
+        const newSocket = new WebSocket("https://0bbc2276ea11.ngrok-free.app/api/sensors/data");
+        newSocket.onmessage = socket.onmessage;
+        newSocket.onopen = socket.onopen;
+        newSocket.onclose = socket.onclose;
+      }, 5000);
+    };
+
+    return () => socket.close();
+  }, []);
+
+  // 👤 Load User Info
+  useEffect(() => {
+    const email = localStorage.getItem("userEmail") || "Not Available";
+    const role = localStorage.getItem("userRole") || "Not Available";
+    setUserEmail(email);
+    setUserRole(role);
   }, []);
 
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <h2>Menu</h2>
-        <Link to="#dashboard" className="sidebar-link">
-          <FaThLarge />
-          Dashboard
-        </Link>
-        <Link to="#history" className="sidebar-link">
-          <FaHistory />
-          History
-        </Link>
-        <Link to="#sensors" className="sidebar-link">
-          <FaMicrochip /> Sensors
-        </Link>
-        <Link to="#messages" className="sidebar-link">
-          <FaEnvelope /> Messages
-        </Link>
-        <Link to="#settings" className="sidebar-link">
-          <FaCog /> Settings
-        </Link>
-      </aside>
+    <section className="dash" id="dashboard-view">
+     
+      {showPopup && (
+        <div className="popup-overlay">
+          <div className="popup-content">
+            <h2>🔥 Fire Alert</h2>
+            <strong>{popupContent}</strong>
+          </div>
+        </div>
+      )}
 
-      <div className="dashboard-container">
-        <nav className="navbar">
-          <h1 className="logo">FireGuard</h1>
-          <FaUserCircle className="user-icon" />
-        </nav>
+      <main className="main-content" id="dashboard">
+        <div className="cards-container" id="sensors">
+          <SensorCard
+            title="Temperature"
+            value={temperature !== null ? `${temperature} °C` : "Loading..."}
+            color="red"
+            icon={<FaTemperatureHigh size={30} color="red" />}
+          />
+          <SensorCard
+            title="Humidity"
+            value={humidity !== null ? `${humidity} %` : "Loading..."}
+            color="green"
+            icon={<WiHumidity size={50} color="blue" />}
+          />
+          <SensorCard
+            title="Gas"
+            value={gas !== null ? `${gas} ppm` : "Loading..."}
+            color="gray"
+            icon={<FaCloud size={40} color="yellow" />}
+          />
+          <SensorCard
+            title="Flame"
+            value={
+              flame !== null ? (flame ? "Flame Detected" : "No Flame") : "Loading..."
+            }
+            color={flame ? "red" : "gray"}
+            icon={<FaFireFlameCurved size={30} color="red" />}
+          />
+        </div>
 
-        <main className="main-content" id="dashboard">
-          <h2 className="dashboard-title">Dashboard</h2>
-
-          <div className="top-section">
-            <div className="map-container">
-              <img
-                src={mapImage || defaultMapImage}
-                alt="Map"
-                className="map-image"
-              />
-            </div>
-            <div className="status-card">
-              <h3>Status</h3>
-              <img
-                src={forestImage || defaultForestImage}
-                alt="Forest Status"
-                className="status-image"
-              />
-              <p>{statusText}</p>
+        <div className="top-section">
+          <div className="status-card">
+            <div className="chart-container bg-gradient-to-r from-green-500 to-blue-500 h-full flex justify-center items-center text-white">
+              <div className="text-center">
+                <div className="icon-div">
+                  <FaShieldAlt size={36} className="opacity-80" />
+                </div>
+                <p className="text-lg font-medium">
+                  System Status: {fireStatus}
+                </p>
+                <p className="text-sm opacity-80 mt-2">
+                  All sensors operating within{""} {fireStatus === "Normal" ? "normal" : "alert"} parameters
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="cards-container" id="sensors">
-            <SensorCard
-              title="Temperature"
-              data={temperatureData}
-              color="red"
-            />
-            <SensorCard title="Humidity" data={humidityData} color="green" />
-            <SensorCard title="Gas" data={gasData} color="gray" />
+          <div className="map-container">
+            <LeafletMap />
           </div>
-        </main>
-      </div>
-    </div>
+        </div>
+      </main>
+    </section>
   );
 };
 
-const SensorCard = ({ title, data, color }) => {
-  return (
-    <div className={`sensor-card ${color}`}>
+const SensorCard = ({ title, value, color, icon }) => (
+  <div className={`sensor-card ${color}`}>
+    <div className="sensor-content">
       <h4>{title}</h4>
-      <div className="chart-placeholder">
-        {data.length > 0 ? (
-          data.map((value, index) => (
-            <div
-              key={index}
-              className="bar"
-              style={{ height: `${value / 5}px` }}
-            ></div>
-          ))
-        ) : (
-          <p>Loading...</p>
-        )}
+      <div className="sensor-value">
+        <p>{value}</p>
       </div>
     </div>
-  );
-};
+    <div className="icon">{icon}</div>
+  </div>
+);
 
 export default Dashboard2;
+
