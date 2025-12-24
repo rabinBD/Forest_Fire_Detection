@@ -9,6 +9,7 @@ This Node.js backend receives sensor data from an ESP32 running a TinyML fire de
 - Node.js + Express
 - Firebase Admin SDK (Firestore)
 - ESP32 (sensor data sender)
+- WebSocket
 
 ---
 
